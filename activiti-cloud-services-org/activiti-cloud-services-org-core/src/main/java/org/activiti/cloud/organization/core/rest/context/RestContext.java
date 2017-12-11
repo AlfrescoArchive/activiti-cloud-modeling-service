@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-package org.activiti.cloud.organization;
+package org.activiti.cloud.organization.core.rest.context;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.web.client.RestTemplate;
+/**
+ * Rest context identifiers enum.
+ */
+public enum RestContext {
 
-@SpringBootApplication
-public class Application {
+    ACTIVITI(true);
 
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
+    private boolean external;
+
+    RestContext(boolean external) {
+        this.external = external;
     }
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class,
-                              args);
+    public boolean isExternal() {
+        return external;
     }
 }

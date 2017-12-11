@@ -14,23 +14,38 @@
  * limitations under the License.
  */
 
-package org.activiti.cloud.organization;
+package org.activiti.cloud.organization.core.rest.context;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.web.client.RestTemplate;
+/**
+ * Rest resource context item.
+ */
+public class RestResourceContextItem {
 
-@SpringBootApplication
-public class Application {
+    private String name;
 
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
+    private String url;
+
+    private String apiKey;
+
+    public RestResourceContextItem(String name,
+                                   String url) {
+        this.name = name;
+        this.url = url;
     }
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class,
-                              args);
+    public String getName() {
+        return name;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
     }
 }
