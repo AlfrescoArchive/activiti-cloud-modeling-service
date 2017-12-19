@@ -33,6 +33,7 @@ import org.springframework.web.context.WebApplicationContext;
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.webAppContextSetup;
 import static org.activiti.cloud.organization.core.model.Model.ModelType.PROCESS_MODEL;
+import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -52,6 +53,8 @@ public class ProcessModelServiceRestClientIT {
     @Autowired
     private ModelRepository modelRepository;
 
+    private ObjectMapper mapper = new ObjectMapper();
+
     @Before
     public void setup() {
         webAppContextSetup(context);
@@ -64,9 +67,8 @@ public class ProcessModelServiceRestClientIT {
                                        PROCESS_MODEL,
                                        "newProcesModelId");
 
-        String json = new ObjectMapper().writeValueAsString(processModel);
         given()
-                .body(json)
+                .body(mapper.writeValueAsString(processModel))
                 .post("/v1/models")
                 .then().expect(status().isCreated());
     }
@@ -76,12 +78,12 @@ public class ProcessModelServiceRestClientIT {
         Model processModel = new Model("processModel_id2",
                                        "newProcesModelNameUpdated",
                                        PROCESS_MODEL,
-                                       "testProcesModelId");
+                                       "contractUpdateProcesModelId");
+        processModel.getData().setContent("someContent");
         modelRepository.save(processModel);
 
-        String json = new ObjectMapper().writeValueAsString(processModel);
         given()
-                .body(json)
+                .body(mapper.writeValueAsString(processModel))
                 .put("/v1/models/processModel_id2")
                 .then().expect(status().isNoContent());
     }
@@ -91,12 +93,14 @@ public class ProcessModelServiceRestClientIT {
         Model processModel = new Model("processModel_id",
                                        "testProcesModelName",
                                        PROCESS_MODEL,
-                                       "testProcesModelId");
+                                       "contractUpdateProcesModelId");
         modelRepository.save(processModel);
 
         given()
                 .get("/v1/models/processModel_id")
                 .then().expect(status().isOk())
-                .and().extract().response().print();
+                .and().body("name", equalTo("contractUpdateProcesModelNameUpdated"))
+                .and().body("content", equalTo("contractContentVersion002"))
+                .and().body("version", equalTo("0.0.2"));
     }
 }
