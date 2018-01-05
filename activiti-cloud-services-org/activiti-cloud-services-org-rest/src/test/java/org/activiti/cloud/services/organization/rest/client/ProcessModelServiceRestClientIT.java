@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = Application.class)
 @WebAppConfiguration
 @AutoConfigureStubRunner(
-        ids = "org.activiti.cloud:activiti-cloud-services-process-model-rest:+:stubs:6565",
+        ids = "org.activiti.cloud:activiti-cloud-services-process-model-rest:+:stubs:8088",
         workOffline = true)
 public class ProcessModelServiceRestClientIT {
 

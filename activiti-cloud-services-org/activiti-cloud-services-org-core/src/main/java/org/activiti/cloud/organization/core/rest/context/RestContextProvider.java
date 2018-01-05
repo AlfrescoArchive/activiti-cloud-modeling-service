@@ -35,9 +35,9 @@ import static org.activiti.cloud.organization.core.util.Maps.entry;
 public class RestContextProvider {
 
     //TODO: load the available rest context from property files
-    public static final String PROCESS_MODEL_URL = "http://localhost:6565";
+    public static final String PROCESS_MODEL_URL = "http://localhost:8088";
 
-    public static final String FORM_MODEL_URL = "http://localhost:6565";
+    public static final String FORM_MODEL_URL = "http://localhost:8088";
 
     private static final RestResourceContextItem ACTIVITI_PROCESS_MODELS =
             new RestResourceContextItem("process-models",
