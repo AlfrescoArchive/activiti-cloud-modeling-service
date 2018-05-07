@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package org.activiti.cloud.services.organization.jpa;
+package org.activiti.cloud.services.organization.rest.resource;
 
 import org.activiti.cloud.organization.core.model.Group;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resource;
 
 /**
- * JPA Repository for {@link Group} entity
+ * Group REST resource
  */
-@RepositoryRestResource(path = "groups",
-        collectionResourceRel = "groups",
-        itemResourceRel = "groups")
-public interface GroupRepository extends JpaRepository<Group, String> {
+public class GroupResource extends Resource<Group> {
 
+    public GroupResource(Group content,
+                         Link... links) {
+        super(content,
+              links);
+    }
 }

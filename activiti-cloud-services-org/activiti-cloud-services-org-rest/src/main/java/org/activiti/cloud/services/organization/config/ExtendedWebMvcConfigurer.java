@@ -18,29 +18,25 @@ package org.activiti.cloud.services.organization.config;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
-import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurerAdapter;
 import org.springframework.data.rest.webmvc.convert.UriListHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Extended WebMvcConfigurer
+ */
 @Configuration
-public class RepositoryRestConfig extends RepositoryRestConfigurerAdapter {
-
-    public static final String API_VERSION = "/v1";
-
-    @Autowired
-    private UriListHttpMessageConverter uriListHttpMessageConverter;
+public class ExtendedWebMvcConfigurer implements WebMvcConfigurer {
 
     @Override
-    public void configureRepositoryRestConfiguration(RepositoryRestConfiguration config) {
-
-        config.setBasePath(API_VERSION);
+    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+        converters.add(uriListHttpMessageConverter());
     }
 
-    @Override
-    public void configureHttpMessageConverters(List<HttpMessageConverter<?>> messageConverters) {
-        messageConverters.add(uriListHttpMessageConverter);
+    @Bean
+    public UriListHttpMessageConverter uriListHttpMessageConverter() {
+        return new UriListHttpMessageConverter ();
     }
 }
