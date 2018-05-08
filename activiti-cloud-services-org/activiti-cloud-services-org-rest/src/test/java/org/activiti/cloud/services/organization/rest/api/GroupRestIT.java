@@ -23,11 +23,10 @@ import org.activiti.cloud.organization.core.model.Group;
 import org.activiti.cloud.organization.core.model.Project;
 import org.activiti.cloud.services.organization.config.Application;
 import org.activiti.cloud.services.organization.config.RepositoryRestConfig;
-import org.activiti.cloud.services.organization.jpa.GroupRepository;
+import org.activiti.cloud.services.organization.jpa.GroupJpaRepository;
 import org.activiti.cloud.services.organization.jpa.ProjectRepository;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +41,7 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.data.rest.webmvc.RestMediaTypes.TEXT_URI_LIST_VALUE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -54,21 +54,37 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = Application.class)
 @WebAppConfiguration
+
+//@EnableSpringDataWebSupport
+//@AutoConfigureMockMvc
+////@ComponentScan(basePackages = {"org.activiti.cloud.alfresco"})
 public class GroupRestIT {
 
+//    @Autowired
     private MockMvc mockMvc;
+
     @Autowired
     private WebApplicationContext webApplicationContext;
+
+//    @Autowired
+//    private GroupController groupController;
+
     @Autowired
     private ObjectMapper mapper;
+
     @Autowired
-    private GroupRepository groupRepository;
+    private GroupJpaRepository groupRepository;
+
     @Autowired
     private ProjectRepository projectRepository;
 
     @Before
     public void setUp() {
-        this.mockMvc = webAppContextSetup(webApplicationContext).build();
+        this.mockMvc = webAppContextSetup(webApplicationContext)
+//                MockMvcBuilders
+//                        .standaloneSetup(groupController)
+//                //.setCustomArgumentResolvers(pageableArgumentResolver)
+                .build();
     }
 
     @After
@@ -84,8 +100,7 @@ public class GroupRestIT {
                             RepositoryRestConfig.API_VERSION))
                 .andExpect(status().isOk())
                 .andDo(print())
-                .andExpect(jsonPath("$._embedded.groups",
-                                    hasSize(0)));
+                .andExpect(jsonPath("$._embedded").doesNotExist());
     }
 
     @Test
@@ -184,8 +199,8 @@ public class GroupRestIT {
         mockMvc.perform(put("{version}/groups/{groupId}/subgroups",
                             RepositoryRestConfig.API_VERSION,
                             newParentGroupId)
-                                .contentType("text/uri-list")
-                                .content(uriList))
+                                .content(uriList)
+                                .contentType(TEXT_URI_LIST_VALUE))
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
@@ -289,7 +304,6 @@ public class GroupRestIT {
     }
 
     @Test
-    @Ignore
     public void createGroupWithSubgroupsDirectly() throws Exception {
         Group parentGroup = new Group("parent_group_id",
                                       "Parent Group");
