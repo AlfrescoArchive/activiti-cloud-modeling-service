@@ -5,11 +5,11 @@
   <parent>
     <groupId>org.activiti.cloud.build</groupId>
     <artifactId>activiti-cloud-parent</artifactId>
-    <version>7.0.31</version>
+    <version>7.0.0.TEST1</version>
   </parent>
   <groupId>org.activiti.cloud.modeling</groupId>
   <artifactId>activiti-cloud-org-service-parent</artifactId>
-  <version>7.0.15</version>
+  <version>7.0.0.TEST1</version>
   <packaging>pom</packaging>
   <name>Activiti Cloud :: Organization Services :: Parent</name>
   <url>http://activiti.org</url>
@@ -39,10 +39,10 @@
     </repository>
   </repositories>
   <properties>
-    <activiti-cloud-build.version>7.0.31</activiti-cloud-build.version>       
-    <activiti-cloud-org-service.version>${project.version}</activiti-cloud-org-service.version>
-    <activiti-cloud-service-common.version>7.0.28</activiti-cloud-service-common.version>
-    <activiti-cloud-process-model-service.version>7.0.17</activiti-cloud-process-model-service.version>
+    <activiti-cloud-build.version>7.0.0.TEST1</activiti-cloud-build.version>       
+    <activiti-cloud-org-service.version>7.0.0.TEST1</activiti-cloud-org-service.version>
+    <activiti-cloud-service-common.version>7.0.0.TEST1</activiti-cloud-service-common.version>
+    <activiti-cloud-process-model-service.version>7.0.0.TEST1</activiti-cloud-process-model-service.version>
   </properties>
   <dependencyManagement>
     <!-- This duplicates activiti-cloud-api-dependencies module but we can't import that module here as this is its parent
