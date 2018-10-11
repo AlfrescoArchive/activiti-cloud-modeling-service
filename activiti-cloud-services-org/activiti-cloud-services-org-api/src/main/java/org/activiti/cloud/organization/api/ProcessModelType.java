@@ -18,6 +18,8 @@ package org.activiti.cloud.organization.api;
 
 import org.springframework.stereotype.Component;
 
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_TYPE_XML;
+
 /**
  * Process model type
  */
@@ -28,6 +30,8 @@ public class ProcessModelType implements ModelType {
 
     public static final String PROCESSES = "processes";
 
+    public static final String BPMN20_XML = "bpmn20.xml";
+
     @Override
     public String getName() {
         return PROCESS;
@@ -36,5 +40,10 @@ public class ProcessModelType implements ModelType {
     @Override
     public String getFolderName() {
         return PROCESSES;
+    }
+
+    @Override
+    public String getContentFileExtension() {
+        return BPMN20_XML;
     }
 }
