@@ -18,6 +18,7 @@ package org.activiti.cloud.services.organization.service;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -226,18 +227,18 @@ public class ModelService {
                 .map(model -> createModel(application,
                                           model))
                 .orElseThrow(() -> new ImportModelException(MessageFormat.format(
-                        "Expected {0} extension for model type {1} was not found for file to import: {2}",
-                        modelType.getContentFileExtension(),
+                        "Unexpected extension was found for file to import model of type {0}: {1}",
                         modelType.getName(),
                         fileContent.getFilename())));
     }
 
     public Optional<String> contentFilenameToModelName(String filename,
                                                        ModelType modelType) {
-        return filename.endsWith(modelType.getContentFileExtension()) ?
-                Optional.of(removeExtension(filename,
-                                            modelType.getContentFileExtension())) :
-                Optional.empty();
+        return Arrays.stream(modelType.getAllowedContentFileExtension())
+                .filter(filename::endsWith)
+                .findFirst()
+                .map(extension -> removeExtension(filename,
+                                                  extension));
     }
 
     public FileContent exportModel(Model model) {

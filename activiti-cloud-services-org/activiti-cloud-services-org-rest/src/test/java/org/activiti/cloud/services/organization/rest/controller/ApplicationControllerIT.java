@@ -46,7 +46,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.context.WebApplicationContext;
 
-import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasJsonPath;
 import static org.activiti.cloud.organization.api.ProcessModelType.PROCESS;
 import static org.activiti.cloud.services.common.util.FileUtils.resourceAsByteArray;
 import static org.activiti.cloud.services.organization.mock.MockFactory.application;
@@ -56,7 +55,6 @@ import static org.activiti.cloud.services.organization.rest.config.RepositoryRes
 import static org.activiti.cloud.services.test.asserts.AssertResponseContent.assertThatResponseContent;
 import static org.assertj.core.api.Assertions.*;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.*;
@@ -338,26 +336,22 @@ public class ApplicationControllerIT {
                         "processes/process-model-2.bpmn20.xml",
                         "processes/process-model-2.json")
                 .hasJsonContentSatisfying("application-with-models.json",
-                                          hasJsonPath("$.name",
-                                                      equalTo("application-with-models")))
+                                          jsonContent -> jsonContent
+                                                  .node("name").isEqualTo("application-with-models"))
                 .hasContent("processes/process-model-1.bpmn20.xml",
                             "Process Model Content 1")
                 .hasJsonContentSatisfying("processes/process-model-1.json",
-                                          hasJsonPath("$.name",
-                                                      equalTo("process-model-1")),
-                                          hasJsonPath("$.type",
-                                                      equalTo("PROCESS")),
-                                          hasJsonPath("$.version",
-                                                      equalTo("0.0.1")))
+                                          jsonContent -> jsonContent
+                                                  .node("name").isEqualTo("process-model-1")
+                                                  .node("type").isEqualTo("PROCESS")
+                                                  .node("version").isEqualTo("0.0.1"))
                 .hasContent("processes/process-model-2.bpmn20.xml",
                             "Process Model Content 2")
                 .hasJsonContentSatisfying("processes/process-model-2.json",
-                                          hasJsonPath("$.name",
-                                                      equalTo("process-model-2")),
-                                          hasJsonPath("$.type",
-                                                      equalTo("PROCESS")),
-                                          hasJsonPath("$.version",
-                                                      equalTo("0.0.1")));
+                                          jsonContent -> jsonContent
+                                                  .node("name").isEqualTo("process-model-2")
+                                                  .node("type").isEqualTo("PROCESS")
+                                                  .node("version").isEqualTo("0.0.1"));
     }
 
     @Test

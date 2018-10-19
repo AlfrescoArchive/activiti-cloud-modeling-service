@@ -409,7 +409,7 @@ public class ModelControllerIT {
     @Test
     public void testExportModelNotFound() throws Exception {
         // WHEN
-        MvcResult response = mockMvc.perform(
+        mockMvc.perform(
                 get("{version}/models/not_existing_model/export",
                     API_VERSION))
                 // THEN
@@ -458,7 +458,7 @@ public class ModelControllerIT {
         applicationRepository.createApplication(parentApplication);
 
         MockMultipartFile zipFile = new MockMultipartFile("file",
-                                                          "x-19022.xml",
+                                                          "x-19022",
                                                           "application/xml",
                                                           resourceAsByteArray("process/x-19022.bpmn20.xml"));
 
@@ -473,7 +473,7 @@ public class ModelControllerIT {
                 // THEN
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(status().reason(is("Expected bpmn20.xml extension for model type PROCESS was not found for file to import: x-19022.xml")));
+                .andExpect(status().reason(is("Unexpected extension was found for file to import model of type PROCESS: x-19022")));
     }
 
     @Test

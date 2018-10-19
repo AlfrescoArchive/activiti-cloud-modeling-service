@@ -17,7 +17,6 @@
 package org.activiti.cloud.services.organization.entity;
 
 import java.util.List;
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
@@ -27,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.activiti.cloud.organization.api.Application;
 import org.activiti.cloud.services.organization.jpa.audit.AuditableEntity;
-import org.hibernate.annotations.Cascade;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 

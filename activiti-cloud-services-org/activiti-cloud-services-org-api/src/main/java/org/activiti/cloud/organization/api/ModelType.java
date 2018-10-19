@@ -26,4 +26,6 @@ public interface ModelType {
     String getFolderName();
 
     String getContentFileExtension();
+
+    String[] getAllowedContentFileExtension();
 }
