@@ -70,7 +70,7 @@ public class ProcessModelValidator implements ModelValidator {
     @Override
     public void validateModelContent(byte[] modelContent) {
         try {
-            BpmnModel bpmnModel = getBpmnModel(modelContent);
+            BpmnModel bpmnModel = convertToBpmnModel(modelContent);
 
             List<ValidationError> validationErrors = processValidator.validate(bpmnModel);
             if (!validationErrors.isEmpty()) {
@@ -89,21 +89,41 @@ public class ProcessModelValidator implements ModelValidator {
         }
     }
 
-    public BpmnModel getBpmnModel(byte[] modelContent) throws IOException, XMLStreamException {
+    public BpmnModel convertToBpmnModel(byte[] modelContent) throws IOException, XMLStreamException {
         try (InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(modelContent))) {
             XMLStreamReader xmlReader = createSafeXmlInputFactory().createXMLStreamReader(reader);
             return bpmnConverter.convertToBpmnModel(xmlReader);
         }
     }
 
-    public String getBpmnModelId(byte[] modelContent) {
+    public String convertAndGetModelId(byte[] modelContent) {
         try {
-            return getBpmnModel(modelContent)
+            return convertToBpmnModel(modelContent)
                     .getProcesses()
                     .stream()
                     .findFirst()
                     .map(Process::getId)
                     .orElseThrow(() -> new ModelingException("Invalid bpmn model: no process id found"));
+        } catch (IOException | XMLStreamException | XMLException ex) {
+            throw new ModelingException("Invalid bpmn model",
+                                        ex);
+        }
+    }
+
+    public byte[] convertAndFixModelId(byte[] modelContent,
+                                       String correctModelId) {
+        try {
+            BpmnModel bpmnModel = convertToBpmnModel(modelContent);
+            Process process = bpmnModel.getProcesses()
+                    .stream()
+                    .findFirst()
+                    .orElseThrow(() -> new ModelingException("Invalid bpmn model: no process found"));
+            if (!correctModelId.equals(process.getId())) {
+                process.setId(correctModelId);
+                return bpmnConverter.convertToXML(bpmnModel);
+            }
+
+            return modelContent;
         } catch (IOException | XMLStreamException | XMLException ex) {
             throw new ModelingException("Invalid bpmn model",
                                         ex);
