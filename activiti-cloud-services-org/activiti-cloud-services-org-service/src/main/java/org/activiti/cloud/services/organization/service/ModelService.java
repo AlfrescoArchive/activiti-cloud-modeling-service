@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ModelValidator;
+import org.activiti.cloud.organization.api.ProcessModelType;
 import org.activiti.cloud.organization.api.Project;
 import org.activiti.cloud.organization.converter.JsonConverter;
 import org.activiti.cloud.organization.core.error.ImportModelException;
@@ -35,6 +36,7 @@ import org.activiti.cloud.organization.core.error.UnknownModelTypeException;
 import org.activiti.cloud.organization.repository.ModelRepository;
 import org.activiti.cloud.services.common.file.FileContent;
 import org.activiti.cloud.services.common.util.ContentTypeUtils;
+import org.activiti.cloud.services.organization.validation.ProcessModelValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -136,8 +138,14 @@ public class ModelService {
 
     public FileContent getModelMetadataFileContent(Model model) {
         Model modelWithFullMetadata = findModelById(model.getId()).orElse(model);
-        //TODO: this is an workaround for https://github.com/Activiti/Activiti/issues/2497 - a better should be done in coordination with the FE
-        modelWithFullMetadata.setId("process-" + modelWithFullMetadata.getId());
+        if (model.getType().equals(ProcessModelType.PROCESS)) {
+            byte[] modelContent = modelRepository.getModelContent(model);
+            findModelValidatorByModelType(model.getType())
+                    .filter(ProcessModelValidator.class::isInstance)
+                    .map(ProcessModelValidator.class::cast)
+                    .map(processModelValidator -> processModelValidator.getBpmnModelId(modelContent))
+                    .ifPresent(modelWithFullMetadata::setId);
+        }
         return new FileContent(getMetadataFilename(model),
                                ContentTypeUtils.CONTENT_TYPE_JSON,
                                jsonConverter.convertToJsonBytes(modelWithFullMetadata));
