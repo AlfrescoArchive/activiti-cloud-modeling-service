@@ -18,13 +18,13 @@ package org.activiti.cloud.organization;
 
 import java.util.function.Predicate;
 
-import org.activiti.cloud.common.swagger.DocketCustomizer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.RequestHandler;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.RequestHandlerSelectors;
+import springfox.documentation.service.ApiInfo;
 import springfox.documentation.spring.web.plugins.Docket;
 
 @Configuration
@@ -37,12 +37,13 @@ public class OrganizationSwaggerConfiguration {
     }
 
     @Bean
-    public DocketCustomizer docketCustomizer(){
-        return (docket) -> docket.apiInfo(new ApiInfoBuilder()
-                                                  .title("Activiti Modeling REST API")
-                                                  .description("Provides access to the core features of Activiti Modeling.")
-                                                  .version("1.0")
-                                                  .build());
+    @ConditionalOnMissingBean
+    public ApiInfo apiInfo(){
+        return new ApiInfoBuilder()
+                .title("Activiti Modeling REST API")
+                .description("Provides access to the core features of Activiti Modeling.")
+                .version("1.0")
+                .build();
     }
 
 }
