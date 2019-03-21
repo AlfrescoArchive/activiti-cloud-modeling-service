@@ -20,7 +20,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.cloud.organization.api.ConnectorModelType;
-import org.activiti.cloud.organization.api.Extensions;
+import org.activiti.cloud.organization.api.process.Extensions;
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelValidationError;
 import org.activiti.cloud.organization.api.Project;
