@@ -23,6 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMap;
+import org.activiti.cloud.organization.api.ConnectorModelType;
 import org.activiti.cloud.organization.api.process.Extensions;
 import org.activiti.cloud.organization.api.process.ProcessVariable;
 import org.activiti.cloud.organization.api.process.ProcessVariableMapping;
@@ -154,6 +155,11 @@ public class MockFactory {
         processVariableMapping.setType(VALUE);
         processVariableMapping.setValue(name);
         return processVariableMapping;
+    }
+
+    public static ModelEntity connectorModel(String name) {
+        return new ModelEntity(name,
+                               ConnectorModelType.NAME);
     }
 
     public static String id() {
