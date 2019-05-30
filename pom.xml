@@ -10,7 +10,7 @@
   </parent>
   <groupId>org.activiti.cloud.modeling</groupId>
   <artifactId>activiti-cloud-org-service-parent</artifactId>
-  <version>7.1.0-SNAPSHOT</version>
+  <version>7.1.67</version>
   <packaging>pom</packaging>
   <name>Activiti Cloud :: Organization Services :: Parent</name>
   <url>http://activiti.org</url>
