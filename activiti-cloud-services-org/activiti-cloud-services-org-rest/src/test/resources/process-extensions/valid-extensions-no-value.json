@@ -30,29 +30,25 @@
         "id": "c297ec88-0ecf-4841-9b0f-2ae814957c68",
         "name": "integerVariable",
         "type": "integer",
-        "required": false,
-        "value": 12
+        "required": false
       },
       "c297ec88-0ecf-4841-9b0f-2ae814957c69": {
         "id": "c297ec88-0ecf-4841-9b0f-2ae814957c68",
         "name": "stringVariable",
         "type": "string",
-        "required": false,
-        "value": "aloha"
+        "required": false
       },
       "c297ec88-0ecf-4841-9b0f-2ae814957c62": {
         "id": "c297ec88-0ecf-4841-9b0f-2ae814957c68",
         "name": "dateVariable",
         "type": "date",
-        "required": false,
-        "value": "1993-06-03"
+        "required": false
       },
       "c297ec88-0ecf-4841-9b0f-2ae814957c64": {
         "id": "c297ec88-0ecf-4841-9b0f-2ae814957c68",
         "name": "booleanVariable",
         "type": "boolean",
-        "required": false,
-        "value": true
+        "required": false
       }
     }
   }
