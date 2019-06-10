@@ -490,6 +490,28 @@ public class ModelControllerIT {
     }
 
     @Test
+    public void validateProcessExtensionsWithValidContentAndNoValues() throws Exception {
+
+        // given
+        byte[] validContent = resourceAsByteArray("process-extensions/valid-extensions-no-value.json");
+        MockMultipartFile file = new MockMultipartFile("file",
+                "extensions.json",
+                CONTENT_TYPE_JSON,
+                validContent);
+
+        Model processModel = modelRepository.createModel(processModelWithExtensions("Process-Model",
+                new Extensions()));
+
+        // when
+        mockMvc.perform(multipart("{version}/models/{model_id}/validate",
+                RepositoryRestConfig.API_VERSION,
+                processModel.getId())
+                .file(file))
+                // then
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
     public void validateProcessExtensionsWithInvalidMappingContent() throws Exception {
 
         // given
