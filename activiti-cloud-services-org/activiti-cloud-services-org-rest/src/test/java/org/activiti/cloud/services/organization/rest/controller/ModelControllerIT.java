@@ -575,10 +575,8 @@ public class ModelControllerIT {
         assertThat(semanticModelValidationException.getValidationErrors())
                 .extracting(ModelValidationError::getProblem,
                         ModelValidationError::getDescription)
-                .contains(tuple("expected minLength: 1, actual: 0",
-                                "#/extensions/properties/c297ec88-0ecf-4841-9b0f-2ae814957c67/value: expected minLength: 1, actual: 0"),
-                          tuple("string [1993-06-03] does not match pattern ^(?![0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))$)",
-                                    "#/extensions/properties/c297ec88-0ecf-4841-9b0f-2ae814957c68/value: string [1993-06-03] does not match pattern ^(?![0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))$)"));
+                .contains(tuple("expected type: String, found: Integer",
+                                "#/extensions/properties/c297ec88-0ecf-4841-9b0f-2ae814957c68/value: expected type: String, found: Integer"));
     }
 
     @Test
