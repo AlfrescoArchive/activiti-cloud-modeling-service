@@ -31,14 +31,7 @@
         "name": "stringVariable",
         "type": "string",
         "required": false,
-        "value": "1993-06-03"
-      },
-      "c297ec88-0ecf-4841-9b0f-2ae814957c67": {
-        "id": "c297ec88-0ecf-4841-9b0f-2ae814957c68",
-        "name": "stringVariable",
-        "type": "string",
-        "required": false,
-        "value": ""
+        "value": 27
       }
     }
   }
