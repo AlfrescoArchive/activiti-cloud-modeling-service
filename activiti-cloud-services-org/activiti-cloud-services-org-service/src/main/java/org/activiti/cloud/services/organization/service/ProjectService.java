@@ -23,6 +23,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.transaction.Transactional;
+
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ModelValidationError;
@@ -51,6 +53,7 @@ import static org.activiti.cloud.services.common.util.ContentTypeUtils.toJsonFil
  */
 @Service
 @PreAuthorize("hasRole('ACTIVITI_MODELER')")
+@Transactional
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
@@ -98,7 +101,10 @@ public class ProjectService {
      */
     public Project updateProject(Project projectToUpdate,
                                  Project newProject) {
-        projectToUpdate.setName(newProject.getName());
+        Optional.ofNullable(newProject.getDescription())
+                .ifPresent(projectToUpdate::setDescription);
+        Optional.ofNullable(newProject.getName())
+                .ifPresent(projectToUpdate::setName);
         return projectRepository.updateProject(projectToUpdate);
     }
 
