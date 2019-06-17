@@ -105,6 +105,7 @@ public class ModelService {
                              Model model) {
         findModelType(model);
         model.setProject(project);
+        model.setId(null);
         if (model.getExtensions() == null) {
             model.setExtensions(new Extensions());
         }
