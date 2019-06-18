@@ -29,7 +29,7 @@
       "c297ec88-0ecf-4841-9b0f-2ae814957c68": {
         "id": "c297ec88-0ecf-4841-9b0f-2ae814957c68",
         "name": "objectVariable",
-        "type": "object",
+        "type": "json",
         "required": false,
         "value": 12
       }

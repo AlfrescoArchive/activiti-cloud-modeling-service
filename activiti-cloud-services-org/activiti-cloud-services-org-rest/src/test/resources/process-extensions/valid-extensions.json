@@ -56,8 +56,8 @@
       },
       "c297ec88-0ecf-4841-9b0f-2ae814957c67": {
         "id": "c297ec88-0ecf-4841-9b0f-2ae814957c08",
-        "name": "objectVariable",
-        "type": "object",
+        "name": "jsonVariable",
+        "type": "json",
         "required": false,
         "value": { "foo":"bar" }
       }
