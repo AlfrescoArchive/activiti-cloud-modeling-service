@@ -48,7 +48,7 @@
         "type":{
           "type": "string",
           "enum": [
-            "date", "string", "integer", "boolean"
+            "date", "string", "integer", "boolean", "object"
           ]
         },
         "required":{
@@ -117,6 +117,22 @@
             "properties": {
               "value": {
                 "type": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "object"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "object"
               }
             }
           }
