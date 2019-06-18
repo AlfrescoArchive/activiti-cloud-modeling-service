@@ -581,7 +581,7 @@ public class ModelControllerIT {
         assertThat(semanticModelValidationException.getValidationErrors())
                 .extracting(ModelValidationError::getProblem,
                         ModelValidationError::getDescription)
-                .contains(tuple("expected type: String, found: Integer",
+                .containsExactly(tuple("expected type: String, found: Integer",
                                 "#/extensions/properties/c297ec88-0ecf-4841-9b0f-2ae814957c68/value: expected type: String, found: Integer"));
     }
 
@@ -613,7 +613,7 @@ public class ModelControllerIT {
         assertThat(semanticModelValidationException.getValidationErrors())
                 .extracting(ModelValidationError::getProblem,
                         ModelValidationError::getDescription)
-                .contains(tuple("expected type: Number, found: String",
+                .containsExactly(tuple("expected type: Number, found: String",
                                     "#/extensions/properties/c297ec88-0ecf-4841-9b0f-2ae814957c68/value: expected type: Number, found: String"));
     }
 
@@ -645,7 +645,7 @@ public class ModelControllerIT {
         assertThat(semanticModelValidationException.getValidationErrors())
                 .extracting(ModelValidationError::getProblem,
                         ModelValidationError::getDescription)
-                .contains(tuple("expected type: Boolean, found: Integer",
+                .containsExactly(tuple("expected type: Boolean, found: Integer",
                         "#/extensions/properties/c297ec88-0ecf-4841-9b0f-2ae814957c68/value: expected type: Boolean, found: Integer"));
 
 
@@ -679,10 +679,12 @@ public class ModelControllerIT {
         assertThat(semanticModelValidationException.getValidationErrors())
                 .extracting(ModelValidationError::getProblem,
                         ModelValidationError::getDescription)
-                .contains(tuple("string [aloha] does not match pattern ^[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))$",
-                        "#/extensions/properties/c297ec88-0ecf-4841-9b0f-2ae814957c64/value: string [aloha] does not match pattern ^[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))$"),
+                .containsExactly(
                         tuple("expected type: String, found: Integer",
-                                "#/extensions/properties/c297ec88-0ecf-4841-9b0f-2ae814957c68/value: expected type: String, found: Integer"));
+                                "#/extensions/properties/c297ec88-0ecf-4841-9b0f-2ae814957c68/value: expected type: String, found: Integer"),
+                        tuple("string [aloha] does not match pattern ^[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))$",
+                        "#/extensions/properties/c297ec88-0ecf-4841-9b0f-2ae814957c64/value: string [aloha] does not match pattern ^[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))$")
+                        );
 
 
     }
