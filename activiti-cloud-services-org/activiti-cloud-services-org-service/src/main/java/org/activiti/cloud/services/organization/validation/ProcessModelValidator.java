@@ -19,15 +19,21 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.xml.stream.XMLStreamException;
 
 import org.activiti.bpmn.exceptions.XMLException;
 import org.activiti.bpmn.model.BpmnModel;
+import org.activiti.bpmn.model.ServiceTask;
+import org.activiti.bpmn.model.Task;
 import org.activiti.bpmn.model.UserTask;
+import org.activiti.cloud.organization.api.ConnectorModelType;
+import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ModelValidationError;
 import org.activiti.cloud.organization.api.ModelValidator;
 import org.activiti.cloud.organization.api.ProcessModelType;
+import org.activiti.cloud.organization.api.ValidationContext;
 import org.activiti.cloud.organization.core.error.SemanticModelValidationException;
 import org.activiti.cloud.organization.core.error.SyntacticModelValidationException;
 import org.activiti.cloud.services.organization.converter.ProcessModelContentConverter;
@@ -70,12 +76,15 @@ public class ProcessModelValidator implements ModelValidator {
     }
 
     @Override
-    public void validateModelContent(byte[] bytes) {
+    public void validateModelContent(byte[] bytes,
+                                     ValidationContext validationContext) {
         try {
             BpmnModel bpmnModel = processModelContentConverter.convertToBpmnModel(bytes);
 
             List<ValidationError> validationErrors = processValidator.validate(bpmnModel);
-            List<ValidationError> validationModelAssigneeErrors = validateTasksAssignedUser(bpmnModel);
+            List<ValidationError> validationModelAssigneeErrors = validateUserTasksAssignee(bpmnModel);
+            validateServiceTasksImplementation(bpmnModel,
+                                               validationContext);
             validationErrors.addAll(validationModelAssigneeErrors);
 
             if (!validationErrors.isEmpty()) {
@@ -94,11 +103,45 @@ public class ProcessModelValidator implements ModelValidator {
         }
     }
 
-    private List<ValidationError> validateTasksAssignedUser(BpmnModel bpmnModel) {
-        return bpmnModel.getProcesses().stream()
+    private List<ValidationError> validateServiceTasksImplementation(BpmnModel bpmnModel,
+                                                                     ValidationContext validationContext) {
+        List<String> availableImplementations = getAvailableImplementations(validationContext);
+
+        return getTasksStream(bpmnModel,
+                              ServiceTask.class)
+                .map(serviceTask -> validateServiceTaskImplementation(serviceTask,
+                                                                      availableImplementations))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+    }
+
+    private <T extends Task> Stream<T> getTasksStream(BpmnModel bpmnModel,
+                                                      Class<T> taskType) {
+        return bpmnModel.getProcesses()
+                .stream()
                 .flatMap(process -> process.getFlowElements().stream())
-                .filter(flowElements -> flowElements.getClass().isAssignableFrom(UserTask.class))
-                .map(UserTask.class::cast)
+                .filter(element -> taskType.isAssignableFrom(element.getClass()))
+                .map(taskType::cast);
+    }
+
+    private List<String> getAvailableImplementations(ValidationContext validationContext) {
+        return validationContext.getAvailableModels()
+                .stream()
+                .filter(model -> ConnectorModelType.NAME.equals(model.getType()))
+                .map(Model::getName)
+                .collect(Collectors.toList());
+    }
+
+    private Optional<ValidationError> validateServiceTaskImplementation(ServiceTask serviceTask,
+                                                                        List<String> availableImplementations) {
+        //TODO: to be implemented
+        return Optional.empty();
+    }
+
+    private List<ValidationError> validateUserTasksAssignee(BpmnModel bpmnModel) {
+        return getTasksStream(bpmnModel,
+                              UserTask.class)
                 .map(this::validateTaskAssignedUser)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
