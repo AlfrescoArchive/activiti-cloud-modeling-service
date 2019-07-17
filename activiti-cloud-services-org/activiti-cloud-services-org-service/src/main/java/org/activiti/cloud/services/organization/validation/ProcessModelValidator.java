@@ -36,6 +36,8 @@ import org.activiti.cloud.organization.api.ProcessModelType;
 import org.activiti.cloud.organization.api.ValidationContext;
 import org.activiti.cloud.organization.core.error.SemanticModelValidationException;
 import org.activiti.cloud.organization.core.error.SyntacticModelValidationException;
+import org.activiti.cloud.services.organization.converter.ConnectorModelAction;
+import org.activiti.cloud.services.organization.converter.ConnectorModelContentConverter;
 import org.activiti.cloud.services.organization.converter.ProcessModelContentConverter;
 import org.activiti.validation.ProcessValidator;
 import org.activiti.validation.ValidationError;
@@ -44,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_TYPE_XML;
 import static org.springframework.util.StringUtils.isEmpty;
@@ -61,18 +64,25 @@ public class ProcessModelValidator implements ModelValidator {
     private final ProcessValidator processValidator;
 
     private final ProcessModelContentConverter processModelContentConverter;
+    private final ConnectorModelContentConverter connectorModelContentConverter;
 
     public final String NO_ASSIGNEE_PROBLEM_TITLE = "No assignee for user task";
     public final String NO_ASSIGNEE_DESCRIPTION = "One of the attributes 'assignee','candidateUsers' or 'candidateGroups' are mandatory on user task";
     public final String USER_TASK_VALIDATOR_NAME = "BPMN user task validator";
 
+    public final String INVALID_SERVICE_IMPLEMENTATION_PROBLEM = "Invalid service implementation";
+    public final String INVALID_SERVICE_IMPLEMENTATION_DESCRIPTION = "Invalid service implementation on service '%s'";
+    public final String SERVICE_USER_TASK_VALIDATOR_NAME = "BPMN service task validator";
+
     @Autowired
     public ProcessModelValidator(ProcessModelType processModelType,
                                  ProcessValidator processValidator,
-                                 ProcessModelContentConverter processModelContentConverter) {
+                                 ProcessModelContentConverter processModelContentConverter,
+                                 ConnectorModelContentConverter connectorModelContentConverter) {
         this.processModelType = processModelType;
         this.processValidator = processValidator;
         this.processModelContentConverter = processModelContentConverter;
+        this.connectorModelContentConverter = connectorModelContentConverter;
     }
 
     @Override
@@ -80,13 +90,15 @@ public class ProcessModelValidator implements ModelValidator {
                                      ValidationContext validationContext) {
         try {
             BpmnModel bpmnModel = processModelContentConverter.convertToBpmnModel(bytes);
-
             List<ValidationError> validationErrors = processValidator.validate(bpmnModel);
-            List<ValidationError> validationModelAssigneeErrors = validateUserTasksAssignee(bpmnModel);
-            validateServiceTasksImplementation(bpmnModel,
-                                               validationContext);
-            validationErrors.addAll(validationModelAssigneeErrors);
 
+            Stream<Optional<ValidationError>> validationErrorsStream = validateUserTasksAssignee(bpmnModel);
+            if (!validationContext.equals(ValidationContext.EMPTY_CONTEXT)) {
+                validationErrorsStream = Stream.concat(validationErrorsStream,
+                                                       validateServiceTasksImplementation(bpmnModel,
+                                                                                          validationContext));
+            }
+            validationErrors.addAll(validationErrorsStream.map(Optional::get).collect(Collectors.toList()));
             if (!validationErrors.isEmpty()) {
                 log.error("Semantic process model validation errors encountered: " + validationErrors);
                 throw new SemanticModelValidationException(validationErrors
@@ -103,17 +115,15 @@ public class ProcessModelValidator implements ModelValidator {
         }
     }
 
-    private List<ValidationError> validateServiceTasksImplementation(BpmnModel bpmnModel,
-                                                                     ValidationContext validationContext) {
+    private Stream<Optional<ValidationError>> validateServiceTasksImplementation(BpmnModel bpmnModel,
+                                                                                 ValidationContext validationContext) {
         List<String> availableImplementations = getAvailableImplementations(validationContext);
 
         return getTasksStream(bpmnModel,
                               ServiceTask.class)
                 .map(serviceTask -> validateServiceTaskImplementation(serviceTask,
                                                                       availableImplementations))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
+                .filter(Optional::isPresent);
     }
 
     private <T extends Task> Stream<T> getTasksStream(BpmnModel bpmnModel,
@@ -129,23 +139,48 @@ public class ProcessModelValidator implements ModelValidator {
         return validationContext.getAvailableModels()
                 .stream()
                 .filter(model -> ConnectorModelType.NAME.equals(model.getType()))
-                .map(Model::getName)
+                .map(this::concatImplementationsAndActions)
+                .flatMap(Stream::sorted)
                 .collect(Collectors.toList());
+    }
+
+    private Stream<String> concatImplementationsAndActions(Model model) {
+        return Optional.ofNullable(model.getContent())
+                .map(String::getBytes)
+                .flatMap(connectorModelContentConverter::convertToModelContent)
+                .get()
+                .getActions()
+                .values()
+                .stream()
+                .map(connectorModelAction -> concatImplementationAndAction(connectorModelAction,
+                                                                           model));
+    }
+
+    private String concatImplementationAndAction(ConnectorModelAction connectorModelAction,
+                                                 Model model) {
+        return isEmpty(connectorModelAction.getName()) ? model.getName() : model.getName() + "." + connectorModelAction.getName();
     }
 
     private Optional<ValidationError> validateServiceTaskImplementation(ServiceTask serviceTask,
                                                                         List<String> availableImplementations) {
-        //TODO: to be implemented
-        return Optional.empty();
+
+        ValidationError validationError = new ValidationError();
+        validationError.setProblem(INVALID_SERVICE_IMPLEMENTATION_PROBLEM);
+        validationError.setValidatorSetName(SERVICE_USER_TASK_VALIDATOR_NAME);
+        validationError.setDefaultDescription(String.format(INVALID_SERVICE_IMPLEMENTATION_DESCRIPTION,
+                                                            serviceTask.getId()));
+
+        return availableImplementations
+                .stream()
+                .anyMatch(implementation -> implementation.equals(serviceTask.getImplementation())) ?
+                Optional.empty() : Optional.of(validationError);
     }
 
-    private List<ValidationError> validateUserTasksAssignee(BpmnModel bpmnModel) {
+    private Stream<Optional<ValidationError>> validateUserTasksAssignee(BpmnModel bpmnModel) {
         return getTasksStream(bpmnModel,
                               UserTask.class)
                 .map(this::validateTaskAssignedUser)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
+                .filter(Optional::isPresent);
     }
 
     private Optional<ValidationError> validateTaskAssignedUser(UserTask userTask) {
