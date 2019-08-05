@@ -96,7 +96,7 @@ public class ProcessModelValidator implements ModelValidator {
             Stream<Optional<ValidationError>> validationErrorsStream = validateModelContentInCurrentContext(bpmnModel,
                                                                                                             validationContext);
 
-            validationErrors.addAll(validationErrorsStream.map(Optional::get).collect(Collectors.toList()));
+            validationErrors.addAll(validationErrorsStream.filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList()));
             if (!validationErrors.isEmpty()) {
                 log.error("Semantic process model validation errors encountered: " + validationErrors);
                 throw new SemanticModelValidationException(validationErrors
@@ -163,7 +163,7 @@ public class ProcessModelValidator implements ModelValidator {
                 .stream()
                 .map(connectorModelAction -> concatNameAndAction(connectorModelAction,
                                                                  model)))
-                .orElse(Stream.of(model.getName()));
+                .orElse(Stream.empty());
     }
 
     private Optional<ConnectorModelContent> extractConnectorModelContent(Model model) {
