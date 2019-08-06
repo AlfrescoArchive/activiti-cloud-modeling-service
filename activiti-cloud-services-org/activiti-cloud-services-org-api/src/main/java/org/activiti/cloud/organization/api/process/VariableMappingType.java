@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum VariableMappingType {
     VARIABLE,
-    STATIC_VALUE,
     VALUE;
 
     @JsonCreator
