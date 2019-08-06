@@ -24,13 +24,13 @@ import org.activiti.cloud.organization.api.process.Constant;
 
 public class ConstantsBuilder {
 
-    public static ConstantsBuilder constantsFor(String taskName) {
-        return new ConstantsBuilder(taskName);
-    }
-
     private Map<String, Constant> constants = new HashMap<>();
 
     private String taskName;
+    
+    public static ConstantsBuilder constantsFor(String taskName) {
+        return new ConstantsBuilder(taskName);
+    }
 
     public ConstantsBuilder(String taskName) {
         this.taskName = taskName;
