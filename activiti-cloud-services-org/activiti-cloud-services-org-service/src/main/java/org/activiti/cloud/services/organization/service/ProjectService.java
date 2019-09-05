@@ -25,11 +25,7 @@ import java.util.stream.Stream;
 
 import javax.transaction.Transactional;
 
-import org.activiti.cloud.organization.api.Model;
-import org.activiti.cloud.organization.api.ModelType;
-import org.activiti.cloud.organization.api.ModelValidationError;
-import org.activiti.cloud.organization.api.Project;
-import org.activiti.cloud.organization.api.ValidationContext;
+import org.activiti.cloud.organization.api.*;
 import org.activiti.cloud.organization.converter.JsonConverter;
 import org.activiti.cloud.organization.core.error.ImportProjectException;
 import org.activiti.cloud.organization.core.error.SemanticModelValidationException;
@@ -65,6 +61,9 @@ public class ProjectService {
     private final ModelTypeService modelTypeService;
 
     private final JsonConverter<Project> jsonConverter;
+
+	private final String EMPTY_PROJECT_PROBLEM = "Invalid project";
+	private final String EMPTY_PROJECT_DESCRIPTION = "Project must contain at least one process";
 
     @Autowired
     public ProjectService(ProjectRepository projectRepository,
@@ -215,20 +214,34 @@ public class ProjectService {
     }
 
     public void validateProject(Project project) {
+		List<ModelValidationError> validationErrors = new ArrayList<>();;
         List<Model> availableModels = modelService.getAllModels(project);
-        ValidationContext validationContext = new ProjectValidationContext(availableModels);
 
-        List<ModelValidationError> validationErrors = availableModels
-                .stream()
-                .flatMap(model -> getModelValidationErrors(model,
-                                                           validationContext))
-                .collect(Collectors.toList());
+		if (isProjectEmpty(availableModels)) {
+			validationErrors.add(getEmptyProjectError());
+		} else {
+			validationErrors = availableModels.stream()
+				.flatMap(model -> getModelValidationErrors(model, new ProjectValidationContext(availableModels)))
+				.collect(Collectors.toList());
+		}
 
         if (!validationErrors.isEmpty()) {
-            throw new SemanticModelValidationException("Validation errors found in project's models",
-                                                       validationErrors);
+            throw new SemanticModelValidationException("Validation errors found in project's models", validationErrors);
         }
     }
+
+    private boolean isProjectEmpty(List<Model> availableModels) {
+    	return availableModels.stream()
+			.noneMatch(model -> model.getType().equals(ProcessModelType.PROCESS));
+	}
+
+    private ModelValidationError getEmptyProjectError() {
+		ModelValidationError error = new ModelValidationError();
+		error.setWarning(false);
+		error.setProblem(EMPTY_PROJECT_PROBLEM);
+		error.setDescription(EMPTY_PROJECT_DESCRIPTION);
+		return error;
+	}
 
     private Stream<ModelValidationError> getModelValidationErrors(Model model,
                                                                   ValidationContext validationContext) {
