@@ -18,6 +18,7 @@ package org.activiti.cloud.services.organization.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -214,16 +215,16 @@ public class ProjectService {
     }
 
     public void validateProject(Project project) {
-        List<ModelValidationError> validationErrors = new ArrayList<>();;
         List<Model> availableModels = modelService.getAllModels(project);
 
-        if (isProjectEmpty(availableModels)) {
-            validationErrors.add(getEmptyProjectError());
-        } else {
-            validationErrors = availableModels.stream()
-                .flatMap(model -> getModelValidationErrors(model, new ProjectValidationContext(availableModels)))
-                .collect(Collectors.toList());
-        }
+		List<ModelValidationError> validationErrors = isProjectEmpty(availableModels) ?
+			Collections.singletonList(getEmptyProjectError()) :
+			availableModels
+				.stream()
+				.flatMap(model -> getModelValidationErrors(model,
+					new ProjectValidationContext(availableModels)))
+				.collect(Collectors.toList());
+
 
         if (!validationErrors.isEmpty()) {
             throw new SemanticModelValidationException("Validation errors found in project's models", validationErrors);
