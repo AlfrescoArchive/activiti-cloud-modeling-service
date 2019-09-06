@@ -214,35 +214,35 @@ public class ProjectService {
         return createdProject;
     }
 
-	public void validateProject(Project project) {
-		List<Model> availableModels = modelService.getAllModels(project);
+    public void validateProject(Project project) {
+        List<Model> availableModels = modelService.getAllModels(project);
 
-		List<ModelValidationError> validationErrors = isProjectEmpty(availableModels) ?
-			Collections.singletonList(getEmptyProjectError()) :
-			availableModels
-				.stream()
-				.flatMap(model -> getModelValidationErrors(model,
-														   new ProjectValidationContext(availableModels)))
-				.collect(Collectors.toList());
+        List<ModelValidationError> validationErrors = isProjectEmpty(availableModels) ?
+            Collections.singletonList(getEmptyProjectError()) :
+            availableModels
+                .stream()
+                .flatMap(model -> getModelValidationErrors(model,
+                                                           new ProjectValidationContext(availableModels)))
+                .collect(Collectors.toList());
 
-		if (!validationErrors.isEmpty()) {
-			throw new SemanticModelValidationException("Validation errors found in project's models",
-													   validationErrors);
-		}
-	}
+        if (!validationErrors.isEmpty()) {
+            throw new SemanticModelValidationException("Validation errors found in project's models",
+                                                       validationErrors);
+        }
+    }
 
     private boolean isProjectEmpty(List<Model> availableModels) {
         return availableModels.stream()
             .noneMatch(model -> model.getType().equals(ProcessModelType.PROCESS));
     }
 
-	private ModelValidationError getEmptyProjectError() {
-		ModelValidationError error = new ModelValidationError();
-		error.setWarning(false);
-		error.setProblem(EMPTY_PROJECT_PROBLEM);
-		error.setDescription(EMPTY_PROJECT_DESCRIPTION);
-		return error;
-	}
+    private ModelValidationError getEmptyProjectError() {
+        ModelValidationError error = new ModelValidationError();
+        error.setWarning(false);
+        error.setProblem(EMPTY_PROJECT_PROBLEM);
+        error.setDescription(EMPTY_PROJECT_DESCRIPTION);
+        return error;
+    }
 
     private Stream<ModelValidationError> getModelValidationErrors(Model model,
                                                                   ValidationContext validationContext) {
