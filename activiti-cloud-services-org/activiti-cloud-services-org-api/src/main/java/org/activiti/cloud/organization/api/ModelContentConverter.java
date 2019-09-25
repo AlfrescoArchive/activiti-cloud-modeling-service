@@ -41,7 +41,7 @@ public interface ModelContentConverter<T extends ModelContent> {
      * @param modelContent the model content instance to convert
      * @return the bytes array
      */
-    byte[] convertToBytes(T modelContent);
+    byte[] convertToBytes(ModelContent modelContent);
 
     /**
      * Convert a bytes array to the handled model content entity, set the given id, and convert back to bytes array.

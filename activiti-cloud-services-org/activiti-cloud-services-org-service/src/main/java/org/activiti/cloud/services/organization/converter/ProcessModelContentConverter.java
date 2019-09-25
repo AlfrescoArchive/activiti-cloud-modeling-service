@@ -25,6 +25,7 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.activiti.bpmn.converter.BpmnXMLConverter;
 import org.activiti.bpmn.model.BpmnModel;
+import org.activiti.cloud.organization.api.ModelContent;
 import org.activiti.cloud.organization.api.ModelContentConverter;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ProcessModelType;
@@ -71,8 +72,9 @@ public class ProcessModelContentConverter implements ModelContentConverter<BpmnP
     }
 
     @Override
-    public byte[] convertToBytes(BpmnProcessModelContent modelContent) {
-        return bpmnConverter.convertToXML(modelContent.getBpmnModel());
+    public byte[] convertToBytes(ModelContent modelContent) {
+        BpmnProcessModelContent bpmnProcessModelContent = (BpmnProcessModelContent) modelContent;
+        return bpmnConverter.convertToXML(bpmnProcessModelContent.getBpmnModel());
     }
 
     public Optional<BpmnProcessModelContent> convertToModelContent(BpmnModel bpmnModel) {
@@ -85,9 +87,14 @@ public class ProcessModelContentConverter implements ModelContentConverter<BpmnP
                                               String modelContentId) {
         return convertToModelContent(bytes)
                 .filter(modelContent -> !modelContentId.equals(modelContent.getId()))
-                .map(modelContent -> modelContent.setId(modelContentId))
+                .map(modelContent -> this.fixContentId(modelContent, modelContentId))
                 .map(this::convertToBytes)
                 .orElse(bytes);
+    }
+
+    private BpmnProcessModelContent fixContentId(BpmnProcessModelContent modelContent, String modelContentId) {
+       modelContent.setId(modelContentId);
+       return modelContent;
     }
 
     public BpmnModel convertToBpmnModel(byte[] modelContent) throws IOException, XMLStreamException {

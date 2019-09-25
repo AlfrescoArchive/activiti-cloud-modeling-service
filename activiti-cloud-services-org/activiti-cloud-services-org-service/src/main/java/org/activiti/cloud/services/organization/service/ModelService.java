@@ -19,22 +19,21 @@ package org.activiti.cloud.services.organization.service;
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
-
-import org.activiti.cloud.organization.api.Model;
-import org.activiti.cloud.organization.api.ModelContent;
-import org.activiti.cloud.organization.api.ModelType;
-import org.activiti.cloud.organization.api.Project;
-import org.activiti.cloud.organization.api.ValidationContext;
+import org.activiti.bpmn.model.CallActivity;
+import org.activiti.bpmn.model.FlowElement;
+import org.activiti.cloud.organization.api.*;
 import org.activiti.cloud.organization.api.process.Extensions;
 import org.activiti.cloud.organization.converter.JsonConverter;
 import org.activiti.cloud.organization.core.error.ImportModelException;
 import org.activiti.cloud.organization.core.error.UnknownModelTypeException;
 import org.activiti.cloud.organization.repository.ModelRepository;
 import org.activiti.cloud.services.common.file.FileContent;
+import org.activiti.cloud.services.organization.converter.BpmnProcessModelContent;
 import org.activiti.cloud.services.organization.validation.ProjectValidationContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +72,8 @@ public class ModelService {
 
     private final JsonConverter<Model> jsonConverter;
 
+    private final HashMap<String, String> modelIdentifiers = new HashMap();
+
     @Autowired
     public ModelService(ModelRepository modelRepository,
                         ModelTypeService modelTypeService,
@@ -103,6 +104,25 @@ public class ModelService {
                                          pageable);
     }
 
+    public Model createNewModelObject(String type,
+                                      String name) {
+      Model model = newModelInstance();
+      model.setType(type);
+      model.setName(name);
+      return model;
+    }
+
+    public Model newModelInstance() {
+      try {
+        return (Model) modelRepository.getModelType().getConstructor().newInstance();
+      } catch (InstantiationException |
+        IllegalAccessException |
+        NoSuchMethodException |
+        InvocationTargetException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
     public Model createModel(Project project,
                              Model model) {
         ModelType modelType = findModelType(model);
@@ -127,25 +147,11 @@ public class ModelService {
         return modelRepository.findModelById(modelId);
     }
 
-    public Model newModelInstance(String type,
-                                  String name) {
-        Model model = newModelInstance();
-        model.setType(type);
-        model.setName(name);
-        return model;
-    }
-
-    public Model newModelInstance() {
-        try {
-            return (Model) modelRepository.getModelType().getConstructor().newInstance();
-        } catch (InstantiationException |
-                IllegalAccessException |
-                NoSuchMethodException |
-                InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
+  /**
+   * THIS IS RELATED TO EXPORT - FIX IT
+   * @param model
+   * @return
+   */
     public Optional<FileContent> getModelMetadataFileContent(Model model) {
         if (isJsonContentType(model.getContentType())) {
             return Optional.empty();
@@ -159,8 +165,7 @@ public class ModelService {
                 .map(ModelContent::getId)
                 .orElseGet(() -> modelContentService.getModelContentId(model));
 
-        Model modelToFile = newModelInstance(fullModel.getType(),
-                                             fullModel.getName());
+        Model modelToFile = createNewModelObject(fullModel.getType(), fullModel.getName());
         modelToFile.setId(bpmnModelId);
         modelToFile.setExtensions(fullModel.getExtensions());
 
@@ -168,6 +173,15 @@ public class ModelService {
                                                           CONTENT_TYPE_JSON,
                                                           jsonConverter.convertToJsonBytes(modelToFile));
         return Optional.of(metadataFileContent);
+    }
+
+    public void cleanModelIdList(){
+      this.modelIdentifiers.clear();
+    }
+
+    public Optional<FileContent> getModelDiagramFile(String modelId) {
+      //TODO: to implement
+      return Optional.empty();
     }
 
     public String getMetadataFilename(Model model) {
@@ -192,15 +206,11 @@ public class ModelService {
                                modelBytes);
     }
 
-    public Optional<FileContent> getModelDiagramFile(String modelId) {
-        //TODO: to implement
-        return Optional.empty();
-    }
-
     public Model updateModelContent(Model modelToBeUpdate,
                                     FileContent fileContent) {
-        FileContent fixedFileContent = checkAndFixModelContent(modelToBeUpdate,
-                                                               fileContent);
+      FileContent fixedFileContent = this.modelIdentifiers.isEmpty() ?
+        fileContent :
+        checkAndFixModelContent(modelToBeUpdate, fileContent);
 
         modelToBeUpdate.setContentType(fixedFileContent.getContentType());
         modelToBeUpdate.setContent(fixedFileContent.toString());
@@ -210,22 +220,73 @@ public class ModelService {
                 .flatMap(validator -> validator.convertToModelContent(fixedFileContent.getFileContent()))
                 .ifPresent(modelContent -> modelToBeUpdate.setTemplate(modelContent.getTemplate()));
 
-        return modelRepository.updateModelContent(modelToBeUpdate,
-                                                  fixedFileContent);
+        return modelRepository.updateModelContent(modelToBeUpdate, fixedFileContent);
     }
 
-    public FileContent checkAndFixModelContent(Model model,
-                                               FileContent fileContent) {
-        return modelContentService
-                .findModelContentConverter(model.getType())
-                .map(converter -> converter
-                        .convertAndFixModelContentId(fileContent.getFileContent(),
-                                                     modelContentService.getModelContentId(model)))
-                .map(content -> new FileContent(fileContent.getFilename(),
-                                                fileContent.getContentType(),
-                                                content))
-                .orElse(fileContent);
+  public FileContent checkAndFixModelContent(Model model, FileContent fileContent) {
+      ModelContent modelContent = this.fixModelContent(model, fileContent);
+      return new FileContent(fileContent.getFilename(), fileContent.getContentType(),
+                                this.convertModelContentToFile(modelContent, model));
+  }
+
+  public ModelContent fixModelContent(Model model, FileContent fileContent) {
+      ModelContent modelContent = null;
+      switch (model.getType()){
+        case "PROCESS": {
+          modelContent = this.createBpmnModelContentFromModel(model, fileContent);
+          this.fixProcessModel((BpmnProcessModelContent) modelContent);
+          break;
+        }
+        default:
+          modelContent = this.createModelContentFromModel(model, fileContent);
+          String actualId = this.modelIdentifiers.get(modelContent.getId());
+          if(actualId != null) {
+            modelContent.setId(actualId);
+          }
+          break;
+      }
+      return modelContent;
+  }
+
+  private void fixProcessModel(BpmnProcessModelContent processModelContent){
+    processModelContent.getBpmnModel().getProcesses().forEach(process -> {
+      String validIdentifier = this.modelIdentifiers.get(process.getId());
+      if(validIdentifier != null && validIdentifier != process.getId()){
+        process.setId(validIdentifier);
+      }
+      process.getFlowElements().stream()
+        .filter(flowElement -> this.isElementToFix(flowElement))
+        .map(flowElement -> {
+          CallActivity callActivity = ((CallActivity) flowElement);
+          String targetProcessId = this.modelIdentifiers.get(callActivity.getCalledElement());
+          callActivity.setCalledElement(targetProcessId);
+          return flowElement;
+        })
+        .collect(Collectors.toList());
+    });
+  }
+
+  private boolean isElementToFix(FlowElement flowElement){
+      return flowElement instanceof CallActivity &&
+        this.modelIdentifiers.get(((CallActivity)flowElement).getCalledElement()) != null;
+  }
+
+  public byte[] convertModelContentToFile(ModelContent modelContent, Model model) {
+     return modelContentService.findModelContentConverter(model.getType())
+       .map(modelContentConverter -> modelContentConverter.convertToBytes(modelContent)).get();
+  }
+
+    public BpmnProcessModelContent createBpmnModelContentFromModel(Model model, FileContent fileContent) {
+      Optional bpmnModelContent = modelContentService.findModelContentConverter(model.getType())
+        .map(modelContentConverter -> modelContentConverter.convertToModelContent(fileContent.getFileContent())).get();
+      return (BpmnProcessModelContent) bpmnModelContent.get();
     }
+
+  public ModelContent createModelContentFromModel(Model model, FileContent fileContent) {
+    Optional formModelConverter = modelContentService.findModelContentConverter(model.getType())
+      .map(modelContentConverter -> modelContentConverter.convertToModelContent(fileContent.getFileContent())).get();
+    return (ModelContent) formModelConverter.get();
+  }
 
     public Model importModel(Project project,
                              ModelType modelType,
@@ -236,17 +297,24 @@ public class ModelService {
                 fileContent.getFilename(),
                 fileContent));
 
-        Model model = importModelFromContent(project,
-                                             modelType,
-                                             fileContent);
-
-        return updateModelContent(model,
-                                  fileContent);
+        Model model = importModelFromContent(project, modelType, fileContent);
+        return model;
     }
 
-    public Model importJsonModel(Project project,
-                                 ModelType modelType,
-                                 FileContent fileContent) {
+    public Model importModelFromContent(Project project, ModelType modelType, FileContent fileContent) {
+      Model model = null;
+      if(modelTypeService.isJson(modelType)){
+        model = createModelFromContent(modelType, fileContent);
+      }else {
+        model = convertContentToModel(modelType, fileContent);
+      }
+      String convertedId = model.getId();
+      createModel(project, model);
+      modelIdentifiers.put(convertedId, String.join("-", model.getType().toLowerCase(), model.getId() ));
+      return model;
+    }
+
+    public Model convertContentToModel(ModelType modelType, FileContent fileContent) {
         Model model = jsonConverter.tryConvertToEntity(fileContent.getFileContent())
                 .orElseThrow(() -> new ImportModelException("Cannot convert json file content to model: " + fileContent));
         model.setName(removeEnd(removeExtension(fileContent.getFilename(),
@@ -254,19 +322,15 @@ public class ModelService {
                                 modelType.getMetadataFileSuffix()));
         model.setType(modelType.getName());
 
-        return createModel(project,
-                           model);
+        return model;
     }
 
-    public Model importModelFromContent(Project project,
-                                        ModelType modelType,
+    public Model createModelFromContent(ModelType modelType,
                                         FileContent fileContent) {
         return contentFilenameToModelName(fileContent.getFilename(),
                                           modelType)
-                .map(modelName -> newModelInstance(modelType.getName(),
+                .map(modelName -> createNewModelObject(modelType.getName(),
                                                    modelName))
-                .map(model -> createModel(project,
-                                          model))
                 .orElseThrow(() -> new ImportModelException(MessageFormat.format(
                         "Unexpected extension was found for file to import model of type {0}: {1}",
                         modelType.getName(),
