@@ -16,6 +16,7 @@
 
 package org.activiti.cloud.services.organization.service;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.Arrays;
@@ -24,6 +25,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.activiti.bpmn.model.CallActivity;
 import org.activiti.bpmn.model.FlowElement;
 import org.activiti.cloud.organization.api.*;
@@ -73,6 +78,8 @@ public class ModelService {
     private final JsonConverter<Model> jsonConverter;
 
     private final HashMap<String, String> modelIdentifiers = new HashMap();
+
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     public ModelService(ModelRepository modelRepository,
@@ -125,6 +132,7 @@ public class ModelService {
 
     public Model createModel(Project project,
                              Model model) {
+        model.setId(null);
         ModelType modelType = findModelType(model);
         model.setProject(project);
         if (model.getExtensions() == null && PROCESS.equals(modelType.getName())) {
@@ -223,29 +231,40 @@ public class ModelService {
         return modelRepository.updateModelContent(modelToBeUpdate, fixedFileContent);
     }
 
-  public FileContent checkAndFixModelContent(Model model, FileContent fileContent) {
-      ModelContent modelContent = this.fixModelContent(model, fileContent);
-      return new FileContent(fileContent.getFilename(), fileContent.getContentType(),
-                                this.convertModelContentToFile(modelContent, model));
-  }
 
-  public ModelContent fixModelContent(Model model, FileContent fileContent) {
-      ModelContent modelContent = null;
+  public FileContent checkAndFixModelContent(Model model, FileContent fileContent) {
+      FileContent fixedFileContent = null;
       switch (model.getType()){
         case "PROCESS": {
-          modelContent = this.createBpmnModelContentFromModel(model, fileContent);
-          this.fixProcessModel((BpmnProcessModelContent) modelContent);
+          fixedFileContent = this.createFixedProcessFileContent(model, fileContent);
           break;
         }
         default:
-          modelContent = this.createModelContentFromModel(model, fileContent);
-          String actualId = this.modelIdentifiers.get(modelContent.getId());
-          if(actualId != null) {
-            modelContent.setId(actualId);
-          }
+          fixedFileContent = this.createFixedModelFileContent(model, fileContent);
           break;
       }
-      return modelContent;
+      return fixedFileContent;
+  }
+
+  private FileContent createFixedProcessFileContent(Model model, FileContent fileContent) {
+    ModelContent modelContent = this.createBpmnModelContentFromModel(model, fileContent);
+    this.fixProcessModel((BpmnProcessModelContent) modelContent);
+    return new FileContent(fileContent.getFilename(), fileContent.getContentType(),
+      this.convertModelContentToFile(modelContent, model));
+  }
+
+  private FileContent createFixedModelFileContent(Model model, FileContent fileContent) {
+    try {
+      JsonNode jsonNode = objectMapper.readTree(fileContent.getFileContent());
+      ObjectNode jFormRepresentation = (ObjectNode) jsonNode.get("formRepresentation");
+      String actualId = this.modelIdentifiers.get(jFormRepresentation.get("id").asText());
+      if(actualId != null) {
+        jFormRepresentation.put("id", actualId);
+      }
+      return new FileContent(fileContent.getFilename(), fileContent.getContentType(), objectMapper.writeValueAsBytes(jsonNode));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void fixProcessModel(BpmnProcessModelContent processModelContent){
@@ -283,11 +302,18 @@ public class ModelService {
     }
 
   public ModelContent createModelContentFromModel(Model model, FileContent fileContent) {
-    Optional formModelConverter = modelContentService.findModelContentConverter(model.getType())
+    Optional modelContent = modelContentService.findModelContentConverter(model.getType())
       .map(modelContentConverter -> modelContentConverter.convertToModelContent(fileContent.getFileContent())).get();
-    return (ModelContent) formModelConverter.get();
+    return (ModelContent) modelContent.get();
   }
 
+  public Model importSingleModel(Project project,
+                           ModelType modelType,
+                           FileContent fileContent) {
+      Model model = this.importModel(project, modelType, fileContent);
+      return this.updateModelContent(model, fileContent);
+
+  }
     public Model importModel(Project project,
                              ModelType modelType,
                              FileContent fileContent) {
@@ -303,14 +329,19 @@ public class ModelService {
 
     public Model importModelFromContent(Project project, ModelType modelType, FileContent fileContent) {
       Model model = null;
+      String convertedId = null;
       if(modelTypeService.isJson(modelType)){
         model = createModelFromContent(modelType, fileContent);
+        ModelContent modelContent = this.createModelContentFromModel(model, fileContent);
+        convertedId = modelContent.getId();
       }else {
         model = convertContentToModel(modelType, fileContent);
+        convertedId = model.getId();
       }
-      String convertedId = model.getId();
       createModel(project, model);
-      modelIdentifiers.put(convertedId, String.join("-", model.getType().toLowerCase(), model.getId() ));
+      if(convertedId!= null) {
+        modelIdentifiers.put(convertedId, String.join("-", model.getType().toLowerCase(), model.getId() ));
+      }
       return model;
     }
 

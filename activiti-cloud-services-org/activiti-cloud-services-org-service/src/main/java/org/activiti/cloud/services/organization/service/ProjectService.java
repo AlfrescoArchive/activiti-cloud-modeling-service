@@ -97,6 +97,7 @@ public class ProjectService {
      * @return the created project
      */
     public Project createProject(Project project) {
+        project.setId(null);
         return projectRepository.createProject(project);
     }
 
