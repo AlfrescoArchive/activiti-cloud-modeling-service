@@ -28,7 +28,7 @@ import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_T
  * {@link ModelValidator} implementation of connector models
  */
 @Component
-public class ConnectorModelValidator extends JsonSchemaModelValidator {
+public class ConnectorModelValidator extends JsonSchemaModelValidator implements ModelValidator {
 
     private final SchemaLoader connectorSchemaLoader;
 

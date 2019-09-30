@@ -59,7 +59,7 @@ public class ProcessModelType implements ModelType {
     }
 
     @Override
-    public String getMetadataFileSuffix() {
+    public String getExtensionsFileSuffix() {
         return METADATA_FILE_SUFFIX;
     }
 }

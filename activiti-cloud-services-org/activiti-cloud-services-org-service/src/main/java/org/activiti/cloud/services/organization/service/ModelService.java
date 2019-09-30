@@ -44,6 +44,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import static org.activiti.cloud.organization.api.ProcessModelType.PROCESS;
 import static org.activiti.cloud.organization.api.ValidationContext.EMPTY_CONTEXT;
 import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_TYPE_JSON;
@@ -146,7 +149,7 @@ public class ModelService {
         }
     }
 
-    public Optional<FileContent> getModelMetadataFileContent(Model model) {
+    public Optional<FileContent> getModelExtensionsFileContent(Model model) {
         if (isJsonContentType(model.getContentType())) {
             return Optional.empty();
         }
@@ -164,10 +167,34 @@ public class ModelService {
         modelToFile.setId(bpmnModelId);
         modelToFile.setExtensions(fullModel.getExtensions());
 
-        FileContent metadataFileContent = new FileContent(getMetadataFilename(model),
+        FileContent metadataFileContent = new FileContent(getExtensionsFilename(model),
                                                           CONTENT_TYPE_JSON,
                                                           jsonConverter.convertToJsonBytes(modelToFile));
         return Optional.of(metadataFileContent);
+    }
+    
+    public Optional<FileContent> getModelMetadataFileContent(Model model) {
+        Model fullModel = findModelById(model.getId()).orElse(model);
+        
+        if(model.getMetadata()==null || model.getMetadata().isEmpty()) {
+            return Optional.empty();
+        }
+        
+        
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            FileContent metadataFileContent = new FileContent(getMetadataFilename(model),
+                                  CONTENT_TYPE_JSON,
+                                  objectMapper.writeValueAsString(fullModel.getMetadata()).getBytes());
+            return Optional.of(metadataFileContent);
+        } catch (JsonProcessingException e) {
+            logger.error("Unable to generate model metadata for model with id: "+ model.getId(), e);
+            return Optional.empty();
+        }
+    }
+
+    public String getExtensionsFilename(Model model) {
+        return toJsonFilename(model.getName() + findModelType(model).getExtensionsFileSuffix());
     }
 
     public String getMetadataFilename(Model model) {
@@ -205,10 +232,12 @@ public class ModelService {
         modelToBeUpdate.setContentType(fixedFileContent.getContentType());
         modelToBeUpdate.setContent(fixedFileContent.toString());
 
-        Optional.ofNullable(modelToBeUpdate.getType())
-                .flatMap(modelContentService::findModelContentConverter)
+        Optional.ofNullable(modelToBeUpdate.getType()).flatMap(modelContentService::findModelContentConverter)
                 .flatMap(validator -> validator.convertToModelContent(fixedFileContent.getFileContent()))
                 .ifPresent(modelContent -> modelToBeUpdate.setTemplate(modelContent.getTemplate()));
+
+        modelContentService.findContentUploadListener(modelToBeUpdate.getType()).ifPresent(listener -> listener.execute(modelToBeUpdate,
+                                                                                                                        fixedFileContent));
 
         return modelRepository.updateModelContent(modelToBeUpdate,
                                                   fixedFileContent);
@@ -216,11 +245,8 @@ public class ModelService {
 
     public FileContent checkAndFixModelContent(Model model,
                                                FileContent fileContent) {
-        return modelContentService
-                .findModelContentConverter(model.getType())
-                .map(converter -> converter
-                        .convertAndFixModelContentId(fileContent.getFileContent(),
-                                                     modelContentService.getModelContentId(model)))
+        return modelContentService.findModelContentConverter(model.getType()).map(converter -> converter.convertAndFixModelContentId(fileContent.getFileContent(),
+                                                                                                                                     modelContentService.getModelContentId(model)))
                 .map(content -> new FileContent(fileContent.getFilename(),
                                                 fileContent.getContentType(),
                                                 content))
@@ -230,11 +256,10 @@ public class ModelService {
     public Model importModel(Project project,
                              ModelType modelType,
                              FileContent fileContent) {
-        logger.debug(MessageFormat.format(
-                "Importing model type {0} from file {1}: {2}",
-                modelType,
-                fileContent.getFilename(),
-                fileContent));
+        logger.debug(MessageFormat.format("Importing model type {0} from file {1}: {2}",
+                                          modelType,
+                                          fileContent.getFilename(),
+                                          fileContent));
 
         Model model = importModelFromContent(project,
                                              modelType,
@@ -251,7 +276,7 @@ public class ModelService {
                 .orElseThrow(() -> new ImportModelException("Cannot convert json file content to model: " + fileContent));
         model.setName(removeEnd(removeExtension(fileContent.getFilename(),
                                                 JSON),
-                                modelType.getMetadataFileSuffix()));
+                                modelType.getExtensionsFileSuffix()));
         model.setType(modelType.getName());
 
         return createModel(project,
@@ -262,24 +287,21 @@ public class ModelService {
                                         ModelType modelType,
                                         FileContent fileContent) {
         return contentFilenameToModelName(fileContent.getFilename(),
-                                          modelType)
-                .map(modelName -> newModelInstance(modelType.getName(),
-                                                   modelName))
-                .map(model -> createModel(project,
-                                          model))
-                .orElseThrow(() -> new ImportModelException(MessageFormat.format(
-                        "Unexpected extension was found for file to import model of type {0}: {1}",
-                        modelType.getName(),
-                        fileContent.getFilename())));
+                                          modelType).map(
+                                                         modelName -> newModelInstance(modelType.getName(),
+                                                                                       modelName))
+                                                  .map(model -> createModel(project,
+                                                                            model))
+                                                  .orElseThrow(() -> new ImportModelException(MessageFormat
+                                                          .format("Unexpected extension was found for file to import model of type {0}: {1}",
+                                                                  modelType.getName(),
+                                                                  fileContent.getFilename())));
     }
 
     public Optional<String> contentFilenameToModelName(String filename,
                                                        ModelType modelType) {
-        return Arrays.stream(modelType.getAllowedContentFileExtension())
-                .filter(filename::endsWith)
-                .findFirst()
-                .map(extension -> removeExtension(filename,
-                                                  extension));
+        return Arrays.stream(modelType.getAllowedContentFileExtension()).filter(filename::endsWith).findFirst().map(extension -> removeExtension(filename,
+                                                                                                                                                 extension));
     }
 
     public void validateModelContent(Model model,
@@ -292,12 +314,9 @@ public class ModelService {
 
     public void validateModelContent(Model model,
                                      FileContent fileContent) {
-        ValidationContext validationContext =
-                !modelTypeService.isJson(findModelType(model)) && fileContent.getContentType().equals(CONTENT_TYPE_JSON) ?
-                        EMPTY_CONTEXT :
-                        Optional.ofNullable(model.getProject())
-                                .map(this::createValidationContext)
-                                .orElseGet(() -> createValidationContext(model));
+        ValidationContext validationContext = !modelTypeService.isJson(findModelType(model)) && fileContent.getContentType().equals(CONTENT_TYPE_JSON)
+                ? EMPTY_CONTEXT
+                : Optional.ofNullable(model.getProject()).map(this::createValidationContext).orElseGet(() -> createValidationContext(model));
         validateModelContent(model.getType(),
                              fileContent.getFileContent(),
                              fileContent.getContentType(),
@@ -331,9 +350,40 @@ public class ModelService {
                                                                                  validationContext));
     }
 
+    public void validateModelMetadata(Model model,
+                                      ValidationContext validationContext) {
+        validateModelMetadata(model.getType(),
+                              modelRepository.getModelContent(model),
+                              validationContext);
+    }
+
+    public void validateModelMetadata(Model model,
+                                      FileContent fileContent) {
+        ValidationContext validationContext = !modelTypeService.isJson(findModelType(model))
+                ? EMPTY_CONTEXT
+                : Optional.ofNullable(model.getProject()).map(this::createValidationContext).orElseGet(() -> createValidationContext(model));
+        validateModelMetadata(model.getType(),
+                              fileContent.getFileContent(),
+                              validationContext);
+    }
+
+    public void validateModelMetadata(Model model,
+                                      FileContent fileContent,
+                                      ValidationContext validationContext) {
+        validateModelMetadata(model.getType(),
+                              fileContent.getFileContent(),
+                              validationContext);
+    }
+
+    private void validateModelMetadata(String modelType,
+                                       byte[] modelContent,
+                                       ValidationContext validationContext) {
+        modelContentService.findMetadataValidator(modelType).ifPresent(modelValidator -> modelValidator.validateModelContent(modelContent,
+                                                                                                                             validationContext));
+    }
+
     private ModelType findModelType(Model model) {
-        return Optional.ofNullable(model.getType())
-                .flatMap(modelTypeService::findModelTypeByName)
+        return Optional.ofNullable(model.getType()).flatMap(modelTypeService::findModelTypeByName)
                 .orElseThrow(() -> new UnknownModelTypeException("Unknown model type: " + model.getType()));
     }
 }

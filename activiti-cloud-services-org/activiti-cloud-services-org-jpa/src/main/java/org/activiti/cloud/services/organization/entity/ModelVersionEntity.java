@@ -16,6 +16,7 @@
 
 package org.activiti.cloud.services.organization.entity;
 
+import java.util.Map;
 import java.util.Optional;
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -63,6 +64,11 @@ public class ModelVersionEntity extends AuditableEntity<String> implements Versi
     @Column
     @Convert(converter = ExtensionsJsonConverter.class)
     private Extensions extensions;
+    
+    @Lob
+    @Column
+    @Convert(converter = MetadataJsonConverter.class)
+    private Map<String,Object> metadata;
 
     public ModelVersionEntity() {
 
@@ -72,6 +78,7 @@ public class ModelVersionEntity extends AuditableEntity<String> implements Versi
         setContent(version.getContent());
         setContentType(version.getContentType());
         setExtensions(version.getExtensions());
+        setMetadata(version.getMetadata());
     }
 
     public VersionIdentifier getVersionIdentifier() {
@@ -114,6 +121,14 @@ public class ModelVersionEntity extends AuditableEntity<String> implements Versi
 
     public void setExtensions(Extensions extensions) {
         this.extensions = extensions;
+    }
+
+    public Map<String,Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String,Object> metadata) {
+        this.metadata = metadata;
     }
 
     @Transient
