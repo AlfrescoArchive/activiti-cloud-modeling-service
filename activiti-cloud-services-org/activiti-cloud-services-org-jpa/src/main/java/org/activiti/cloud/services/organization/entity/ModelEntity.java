@@ -18,6 +18,7 @@ package org.activiti.cloud.services.organization.entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -163,7 +164,7 @@ public class ModelEntity extends AuditableEntity<String> implements Model<Projec
     public void setContent(String content) {
         latestVersion.setContent(content);
     }
-
+    
     @Override
     public Extensions getExtensions() {
         return latestVersion.getExtensions();
@@ -172,6 +173,16 @@ public class ModelEntity extends AuditableEntity<String> implements Model<Projec
     @Override
     public void setExtensions(Extensions extensions) {
         latestVersion.setExtensions(extensions);
+    }
+    
+    @Override
+    public Map<String,Object> getMetadata() {
+        return latestVersion.getMetadata();
+    }
+
+    @Override
+    public void setMetadata(Map<String,Object> metadata) {
+        latestVersion.setMetadata(metadata);
     }
 
     @Override

@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ModelValidationError;
+import org.activiti.cloud.organization.api.ModelValidator;
 import org.activiti.cloud.organization.api.ProcessModelType;
 import org.activiti.cloud.organization.api.ValidationContext;
 import org.activiti.cloud.organization.converter.JsonConverter;
@@ -46,7 +47,7 @@ import static org.apache.commons.lang3.StringUtils.removeStart;
 
 @Component
 @ConditionalOnMissingBean(name = "ExtensionsModelValidator")
-public class ExtensionsModelValidator extends JsonSchemaModelValidator {
+public class ExtensionsModelValidator extends JsonSchemaModelValidator  implements ModelValidator {
 
     public static final String UNKNOWN_PROCESS_ID_VALIDATION_ERROR_PROBLEM = "Unknown process id in process extensions: %s";
     public static final String UNKNOWN_PROCESS_ID_VALIDATION_ERROR_DESCRIPTION = "The process extensions are bound to an unknown process id '%s'";

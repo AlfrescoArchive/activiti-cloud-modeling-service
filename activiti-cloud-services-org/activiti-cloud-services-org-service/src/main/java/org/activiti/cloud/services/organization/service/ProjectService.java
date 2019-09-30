@@ -19,6 +19,7 @@ package org.activiti.cloud.services.organization.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,6 +40,7 @@ import org.activiti.cloud.services.common.zip.ZipBuilder;
 import org.activiti.cloud.services.common.zip.ZipStream;
 import org.activiti.cloud.services.organization.validation.ProjectValidationContext;
 import org.activiti.cloud.services.organization.validation.project.ProjectValidator;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -66,6 +68,8 @@ public class ProjectService {
     private final ModelTypeService modelTypeService;
 
     private final JsonConverter<Project> jsonConverter;
+    
+    private final JsonConverter<Map> jsonMetadataConverter;
 
     private final Set<ProjectValidator> projectValidators;
 
@@ -74,12 +78,14 @@ public class ProjectService {
                           ModelService modelService,
                           ModelTypeService modelTypeService,
                           JsonConverter<Project> jsonConverter,
+                          JsonConverter<Map> jsonMetadataConverter,
                           Set<ProjectValidator> projectValidators) {
         this.projectRepository = projectRepository;
         this.modelService = modelService;
         this.modelTypeService = modelTypeService;
         this.jsonConverter = jsonConverter;
         this.projectValidators = projectValidators;
+        this.jsonMetadataConverter = jsonMetadataConverter;
     }
 
     /**
@@ -154,6 +160,9 @@ public class ProjectService {
                                     .appendFolder(folderName)
                                     .appendFile(modelService.exportModel(model),
                                                 folderName);
+                            modelService.getModelExtensionsFileContent(model).ifPresent(
+                                    extensionFileContent -> zipBuilder.appendFile(extensionFileContent,
+                                                                                 folderName));
                             modelService.getModelMetadataFileContent(model).ifPresent(
                                     metadataFileContent -> zipBuilder.appendFile(metadataFileContent,
                                                                                  folderName));
@@ -182,9 +191,16 @@ public class ProjectService {
                                     if (fileContent.isJson()) {
                                         String modelName = removeExtension(fileContent.getFilename(),
                                                                            JSON);
-                                        projectHolder.addModelJsonFile(modelName,
-                                                                       modelType,
-                                                                       fileContent);
+                                        if(!modelName.endsWith(modelType.getMetadataFileSuffix())) {
+                                            projectHolder.addModelJsonFile(modelName,
+                                                                           modelType,
+                                                                           fileContent);
+                                        }else {
+                                            //Add metadata to the projectHolder
+                                            projectHolder.addMetadata(StringUtils.removeEnd(modelName, modelType.getMetadataFileSuffix()), 
+                                                                      modelType, 
+                                                                      fileContent);
+                                        }
                                     } else {
                                         modelService.contentFilenameToModelName(zipEntry.getFileName(),
                                                                                 modelType)
@@ -204,18 +220,26 @@ public class ProjectService {
                 .orElseThrow(() -> new ImportProjectException("No valid project entry found to import: " + file.getOriginalFilename()));
 
         projectHolder.getModelJsonFiles().forEach(modelJsonFile -> {
+           Model createdModel;
             if (modelTypeService.isJson(modelJsonFile.getModelType())) {
-                modelService.importModel(createdProject,
+                createdModel = modelService.importModel(createdProject,
                                          modelJsonFile.getModelType(),
                                          modelJsonFile.getFileContent());
             } else {
-                Model createdModel = modelService.importJsonModel(createdProject,
+                createdModel = modelService.importJsonModel(createdProject,
                                                                   modelJsonFile.getModelType(),
                                                                   modelJsonFile.getFileContent());
                 projectHolder.getModelContentFile(createdModel)
                         .ifPresent(fileContent -> modelService.updateModelContent(createdModel,
                                                                                   fileContent));
             }
+            //Update model with metadata
+            projectHolder.getModelMetadata(createdModel)
+                        .ifPresent(fileMetadata -> {
+                            jsonMetadataConverter.tryConvertToEntity(fileMetadata.getFileContent())
+                                    .ifPresent(createdModel::setMetadata);
+                            modelService.updateModel(createdModel, createdModel);
+                        });
         });
         return createdProject;
     }
@@ -252,10 +276,19 @@ public class ProjectService {
         }
 
         try {
+            modelService.getModelExtensionsFileContent(model).ifPresent(
+                    extensionsFileContent -> modelService.validateModelContent(model,
+                                                                               extensionsFileContent,
+                                                                               validationContext));
+        } catch (SemanticModelValidationException validationException) {
+            validationErrors.addAll(validationException.getValidationErrors());
+        }
+        
+        try {
             modelService.getModelMetadataFileContent(model).ifPresent(
-                    metadataFileContent -> modelService.validateModelContent(model,
-                                                                             metadataFileContent,
-                                                                             validationContext));
+                    metadataFileContent -> modelService.validateModelMetadata(model,
+                                                                              metadataFileContent,
+                                                                              validationContext));
         } catch (SemanticModelValidationException validationException) {
             validationErrors.addAll(validationException.getValidationErrors());
         }
