@@ -16,6 +16,8 @@
 
 package org.activiti.cloud.organization.api;
 
+import java.util.Map;
+
 import org.activiti.cloud.organization.api.process.Extensions;
 import org.activiti.cloud.services.auditable.Auditable;
 
@@ -53,6 +55,10 @@ public interface Model<A extends Project, U> extends Auditable<U> {
     Extensions getExtensions();
 
     void setExtensions(Extensions extensions);
+    
+    Map<String,Object> getMetadata();
+    
+    void setMetadata(Map<String,Object> metadata);
 
     String getTemplate();
 
