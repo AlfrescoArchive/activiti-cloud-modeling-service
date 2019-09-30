@@ -18,6 +18,8 @@ package org.activiti.cloud.services.organization.service;
 
 import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_TYPE_JSON;
 
+import org.activiti.cloud.organization.api.ContentUpdateListener;
+import org.activiti.cloud.organization.api.MetadataValidator;
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelContent;
 import org.activiti.cloud.organization.api.ModelContentConverter;
@@ -37,12 +39,18 @@ public class ModelContentService {
     private final Map<String, ModelValidator> modelContentValidatorsMapByModelType;
 
     private final Map<String, ModelValidator> modelJsonValidatorsMapByModelType;
-
+    
     private final Map<String, ModelContentConverter<? extends ModelContent>> modelContentConvertersMapByModelType;
+    
+    private final Map<String, MetadataValidator> modelMetadataValidatorsMapByModelType;
+    
+    private final Map<String, ContentUpdateListener> contentUpdateListenersMapByModelType;
 
     public ModelContentService(ModelTypeService modelTypeService,
                                Set<ModelValidator> modelValidators,
-                               Set<ModelContentConverter<? extends ModelContent>> modelConverters) {
+                               Set<ModelContentConverter<? extends ModelContent>> modelConverters,
+                               Set<MetadataValidator> metadataValidators,
+                               Set<ContentUpdateListener> contentUpdateListeners) {
         this.modelContentValidatorsMapByModelType = modelValidators
                 .stream()
                 .filter(validator -> !CONTENT_TYPE_JSON.equals(validator.getHandledContentType()) ||
@@ -60,6 +68,14 @@ public class ModelContentService {
                 .stream()
                 .collect(Collectors.toMap(converter -> converter.getHandledModelType().getName(),
                                           Function.identity()));
+        this.modelMetadataValidatorsMapByModelType = metadataValidators
+                .stream()
+                .collect(Collectors.toMap(validator -> validator.getHandledModelType().getName(),
+                                          Function.identity()));
+        this.contentUpdateListenersMapByModelType = contentUpdateListeners
+                .stream()
+                .collect(Collectors.toMap(contentUpdateListener -> contentUpdateListener.getHandledModelType().getName(),
+                                          Function.identity()));
     }
 
     public Optional<ModelValidator> findModelValidator(String modelType,
@@ -68,9 +84,17 @@ public class ModelContentService {
                                            modelJsonValidatorsMapByModelType.get(modelType) :
                                            modelContentValidatorsMapByModelType.get(modelType));
     }
+    
+    public Optional<MetadataValidator> findMetadataValidator(String modelType) {
+        return Optional.ofNullable(modelMetadataValidatorsMapByModelType.get(modelType));
+    }
 
     public Optional<ModelContentConverter<? extends ModelContent>> findModelContentConverter(String modelType) {
         return Optional.ofNullable(modelContentConvertersMapByModelType.get(modelType));
+    }
+    
+    public Optional<ContentUpdateListener> findContentUploadListener(String modelType) {
+        return Optional.ofNullable(contentUpdateListenersMapByModelType.get(modelType));
     }
 
     public String getModelContentId(Model model) {

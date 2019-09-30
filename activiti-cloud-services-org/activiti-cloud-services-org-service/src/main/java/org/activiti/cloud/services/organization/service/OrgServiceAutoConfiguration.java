@@ -1,6 +1,10 @@
 package org.activiti.cloud.services.organization.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
+import java.util.Set;
+
+import org.activiti.cloud.organization.api.ContentUpdateListener;
+import org.activiti.cloud.organization.api.MetadataValidator;
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelContent;
 import org.activiti.cloud.organization.api.ModelContentConverter;
@@ -14,7 +18,7 @@ import org.activiti.cloud.services.organization.validation.project.ProjectValida
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Set;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
 public class OrgServiceAutoConfiguration {
@@ -22,10 +26,14 @@ public class OrgServiceAutoConfiguration {
     @Bean
     public ModelContentService modelContentService(ModelTypeService modelTypeService,
                                                    Set<ModelValidator> modelValidators,
-                                                   Set<ModelContentConverter<? extends ModelContent>> modelConverters) {
+                                                   Set<ModelContentConverter<? extends ModelContent>> modelConverters,
+                                                   Set<MetadataValidator> metadataValidators,
+                                                   Set<ContentUpdateListener> contentUpdateListeners) {
         return new ModelContentService(modelTypeService,
                                        modelValidators,
-                                       modelConverters);
+                                       modelConverters,
+                                       metadataValidators,
+                                       contentUpdateListeners);
     }
 
     @Bean
@@ -51,12 +59,14 @@ public class OrgServiceAutoConfiguration {
                                          ModelService modelService,
                                          ModelTypeService modelTypeService,
                                          JsonConverter<Project> jsonConverter,
+                                         JsonConverter<Map> jsonMetadataConverter,
                                          Set<ProjectValidator> projectValidators) {
 
         return new ProjectService(projectRepository,
                                   modelService,
                                   modelTypeService,
                                   jsonConverter,
+                                  jsonMetadataConverter,
                                   projectValidators);
 
     }

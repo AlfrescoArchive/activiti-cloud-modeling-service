@@ -68,7 +68,7 @@ public interface ModelJpaRepository extends VersionedJpaRepository<ModelEntity, 
     default byte[] getModelExport(ModelEntity model) {
         return getModelContent(model);
     }
-
+    
     @Override
     default ModelEntity createModel(ModelEntity model) {
         model.setId(null);
@@ -82,6 +82,8 @@ public interface ModelJpaRepository extends VersionedJpaRepository<ModelEntity, 
                 .ifPresent(modelToBeUpdated::setName);
         Optional.ofNullable(newModel.getExtensions())
                 .ifPresent(modelToBeUpdated::setExtensions);
+        Optional.ofNullable(newModel.getMetadata())
+                .ifPresent(modelToBeUpdated::setMetadata);
         return save(modelToBeUpdated);
     }
 
