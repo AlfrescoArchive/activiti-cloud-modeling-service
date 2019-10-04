@@ -188,7 +188,7 @@ public class ModelValidationControllerIT {
                 resourceAsByteArray("process-extensions/RankMovie-extensions.json"));
 
         // when
-        mockMvc.perform(multipart("{version}/models/{model_id}/validate",
+        mockMvc.perform(multipart("{version}/models/{model_id}/validate/extensions",
                                   API_VERSION,
                                   processModel.getId())
                                 .file(file))
@@ -216,7 +216,7 @@ public class ModelValidationControllerIT {
                 resourceAsByteArray("process-extensions/RankMovie-extensions-no-default-values.json"));
 
         // when
-        mockMvc.perform(multipart("{version}/models/{model_id}/validate",
+        mockMvc.perform(multipart("{version}/models/{model_id}/validate/extensions",
                                   API_VERSION,
                                   processModel.getId())
                                 .file(file))
@@ -271,14 +271,14 @@ public class ModelValidationControllerIT {
                                                                                     new Extensions()));
         // when
         final ResultActions resultActions = mockMvc
-                .perform(multipart("{version}/models/{model_id}/validate",
+                .perform(multipart("{version}/models/{model_id}/validate/extensions",
                                    API_VERSION,
                                    processModel.getId()).file(file))
                 .andDo(print());
         // then
         resultActions.andExpect(status().isBadRequest());
         assertThat(resultActions.andReturn().getResponse().getErrorMessage())
-                .isEqualTo("#/extensions/mappings/ServiceTask_06crg3b: 2 schema violations found");
+                .isEqualTo("#: #: only 1 subschema matches out of 2");
 
         final Exception resolvedException = resultActions.andReturn().getResolvedException();
         assertThat(resolvedException).isInstanceOf(SemanticModelValidationException.class);
@@ -310,7 +310,7 @@ public class ModelValidationControllerIT {
                                                                                     new Extensions()));
         // when
         final ResultActions resultActions = mockMvc
-                .perform(multipart("{version}/models/{model_id}/validate",
+                .perform(multipart("{version}/models/{model_id}/validate/extensions",
                                    API_VERSION,
                                    processModel.getId()).file(file))
                 .andDo(print());
@@ -344,7 +344,7 @@ public class ModelValidationControllerIT {
                                                                                     new Extensions()));
         // when
         final ResultActions resultActions = mockMvc
-                .perform(multipart("{version}/models/{model_id}/validate",
+                .perform(multipart("{version}/models/{model_id}/validate/extensions",
                                    API_VERSION,
                                    processModel.getId()).file(file))
                 .andDo(print());
@@ -378,7 +378,7 @@ public class ModelValidationControllerIT {
                                                                                     new Extensions()));
         // when
         final ResultActions resultActions = mockMvc
-                .perform(multipart("{version}/models/{model_id}/validate",
+                .perform(multipart("{version}/models/{model_id}/validate/extensions",
                                    API_VERSION,
                                    processModel.getId()).file(file))
                 .andDo(print());
@@ -412,7 +412,7 @@ public class ModelValidationControllerIT {
                                                                                     new Extensions()));
         // when
         final ResultActions resultActions = mockMvc
-                .perform(multipart("{version}/models/{model_id}/validate",
+                .perform(multipart("{version}/models/{model_id}/validate/extensions",
                                    API_VERSION,
                                    processModel.getId()).file(file))
                 .andDo(print());
@@ -446,7 +446,7 @@ public class ModelValidationControllerIT {
                                                                                     new Extensions()));
         // when
         final ResultActions resultActions = mockMvc
-                .perform(multipart("{version}/models/{model_id}/validate",
+                .perform(multipart("{version}/models/{model_id}/validate/extensions",
                                    API_VERSION,
                                    processModel.getId()).file(file))
                 .andDo(print());

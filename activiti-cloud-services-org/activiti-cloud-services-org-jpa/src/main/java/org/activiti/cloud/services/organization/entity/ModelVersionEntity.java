@@ -63,13 +63,8 @@ public class ModelVersionEntity extends AuditableEntity<String> implements Versi
     @Lob
     @Column
     @Convert(converter = ExtensionsJsonConverter.class)
-    private Extensions extensions;
+    private Map<String,Object> extensions;
     
-    @Lob
-    @Column
-    @Convert(converter = MetadataJsonConverter.class)
-    private Map<String,Object> metadata;
-
     public ModelVersionEntity() {
 
     }
@@ -78,7 +73,6 @@ public class ModelVersionEntity extends AuditableEntity<String> implements Versi
         setContent(version.getContent());
         setContentType(version.getContentType());
         setExtensions(version.getExtensions());
-        setMetadata(version.getMetadata());
     }
 
     public VersionIdentifier getVersionIdentifier() {
@@ -115,20 +109,12 @@ public class ModelVersionEntity extends AuditableEntity<String> implements Versi
         this.content = content;
     }
 
-    public Extensions getExtensions() {
+    public Map<String,Object> getExtensions() {
         return extensions;
     }
 
-    public void setExtensions(Extensions extensions) {
+    public void setExtensions(Map<String,Object> extensions) {
         this.extensions = extensions;
-    }
-
-    public Map<String,Object> getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(Map<String,Object> metadata) {
-        this.metadata = metadata;
     }
 
     @Transient

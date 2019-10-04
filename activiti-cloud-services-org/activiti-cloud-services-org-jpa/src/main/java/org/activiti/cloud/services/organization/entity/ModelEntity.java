@@ -166,25 +166,15 @@ public class ModelEntity extends AuditableEntity<String> implements Model<Projec
     }
     
     @Override
-    public Extensions getExtensions() {
+    public Map<String,Object> getExtensions() {
         return latestVersion.getExtensions();
     }
 
     @Override
-    public void setExtensions(Extensions extensions) {
+    public void setExtensions(Map<String,Object> extensions) {
         latestVersion.setExtensions(extensions);
     }
     
-    @Override
-    public Map<String,Object> getMetadata() {
-        return latestVersion.getMetadata();
-    }
-
-    @Override
-    public void setMetadata(Map<String,Object> metadata) {
-        latestVersion.setMetadata(metadata);
-    }
-
     @Override
     public String getTemplate() {
         return template;

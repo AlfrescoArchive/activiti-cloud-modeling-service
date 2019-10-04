@@ -63,10 +63,7 @@ public class ModelImpl extends AbstractAuditable<String> implements Model<Projec
     private String projectId;
 
     @ApiModelProperty(value = "The extensions of the model", readOnly = true)
-    private Extensions extensions;
-    
-    @ApiModelProperty(value = "The metadata of the model", readOnly = true)
-    private Map<String,Object> metadata;
+    private Map<String,Object> extensions;
 
     @ApiModelProperty(value = "The template of the model", readOnly = true)
     private String template;
@@ -158,23 +155,13 @@ public class ModelImpl extends AbstractAuditable<String> implements Model<Projec
     }
 
     @Override
-    public Extensions getExtensions() {
+    public Map<String,Object> getExtensions() {
         return extensions;
     }
 
     @Override
-    public void setExtensions(Extensions extensions) {
+    public void setExtensions(Map<String,Object> extensions) {
         this.extensions = extensions;
-    }
-
-    @Override
-    public Map<String,Object> getMetadata() {
-        return metadata;
-    }
-
-    @Override
-    public void setMetadata(Map<String,Object> metadata) {
-        this.metadata = metadata;
     }
 
     @Override

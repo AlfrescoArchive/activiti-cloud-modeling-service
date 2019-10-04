@@ -19,25 +19,21 @@ package org.activiti.cloud.organization.api;
 import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_TYPE_JSON;
 
 /**
- * Business logic related with validation of the metadata of a model
+ * Business logic related with validation of the extensions of a model
  */
-public interface MetadataValidator {
-    
-    /**
-     * Validate the given model content.
-     * @param modelContent the model content to validate
-     * @param validationContext the validation context
-     */
-    void validateModelContent(byte[] modelContent,
-                              ValidationContext validationContext);
+public interface ModelExtensionsValidator extends ModelValidator {
 
     /**
-     * Get handled model type by this validator.
-     * @return handled model type
+     * Validate the given model content.
+     * 
+     * @param modelContent      the model content to validate
+     * @param validationContext the validation context
      */
-    ModelType getHandledModelType();
-    
-    
+    default void validateModelExtensions(byte[] modelContent,
+                                 ValidationContext validationContext) {
+        validate(modelContent,validationContext);
+    }
+
     /**
      * Get handled content type by this validator (by default JSON).
      * 

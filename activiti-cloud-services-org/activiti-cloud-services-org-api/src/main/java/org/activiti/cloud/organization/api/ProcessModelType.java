@@ -34,8 +34,6 @@ public class ProcessModelType implements ModelType {
 
     public static final String BPMN = "bpmn";
 
-    public static final String METADATA_FILE_SUFFIX = "-extensions";
-
     public static final String[] ALLOWED_FILE_EXTENSIONS = new String[]{BPMN20_XML, BPMN_XML, BPMN};
 
     @Override
@@ -56,10 +54,5 @@ public class ProcessModelType implements ModelType {
     @Override
     public String[] getAllowedContentFileExtension() {
         return ALLOWED_FILE_EXTENSIONS;
-    }
-
-    @Override
-    public String getExtensionsFileSuffix() {
-        return METADATA_FILE_SUFFIX;
     }
 }

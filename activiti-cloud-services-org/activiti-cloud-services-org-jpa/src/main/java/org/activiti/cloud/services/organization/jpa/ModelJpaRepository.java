@@ -82,8 +82,6 @@ public interface ModelJpaRepository extends VersionedJpaRepository<ModelEntity, 
                 .ifPresent(modelToBeUpdated::setName);
         Optional.ofNullable(newModel.getExtensions())
                 .ifPresent(modelToBeUpdated::setExtensions);
-        Optional.ofNullable(newModel.getMetadata())
-                .ifPresent(modelToBeUpdated::setMetadata);
         return save(modelToBeUpdated);
     }
 
