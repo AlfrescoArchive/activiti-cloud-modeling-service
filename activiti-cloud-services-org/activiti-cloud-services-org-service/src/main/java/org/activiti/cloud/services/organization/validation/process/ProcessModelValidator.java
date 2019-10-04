@@ -24,6 +24,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.activiti.bpmn.exceptions.XMLException;
 import org.activiti.bpmn.model.BpmnModel;
+import org.activiti.cloud.organization.api.ModelContentValidator;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ModelValidationError;
 import org.activiti.cloud.organization.api.ModelValidator;
@@ -45,7 +46,7 @@ import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_T
  */
 @Component
 @ConditionalOnMissingBean(name = "ProcessModelValidator")
-public class ProcessModelValidator implements ModelValidator {
+public class ProcessModelValidator implements ModelContentValidator {
 
     private final Logger log = LoggerFactory.getLogger(ProcessModelValidator.class);
 
@@ -65,7 +66,7 @@ public class ProcessModelValidator implements ModelValidator {
     }
 
     @Override
-    public void validateModelContent(byte[] bytes,
+    public void validate(byte[] bytes,
                                      ValidationContext validationContext) {
         BpmnModel bpmnModel = processContentToBpmnModel(bytes);
         List<ModelValidationError> validationErrors =

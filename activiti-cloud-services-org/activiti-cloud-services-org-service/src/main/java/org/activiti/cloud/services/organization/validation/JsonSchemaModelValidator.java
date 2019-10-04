@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.activiti.cloud.organization.api.ModelValidationError;
-import org.activiti.cloud.organization.api.ModelValidationErrorProducer;
 import org.activiti.cloud.organization.api.ModelValidator;
 import org.activiti.cloud.organization.api.ValidationContext;
 import org.activiti.cloud.organization.core.error.SemanticModelValidationException;
@@ -39,14 +38,15 @@ import org.slf4j.LoggerFactory;
 /**
  * JSON Schema based abstract implementation for {@link ModelValidator}
  */
-public abstract class JsonSchemaModelValidator implements ModelValidationErrorProducer {
+public abstract class JsonSchemaModelValidator implements ModelValidator {
 
     private final Logger log = LoggerFactory.getLogger(JsonSchemaModelValidator.class);
 
     protected abstract SchemaLoader schemaLoader();
 
-    public void validateModelContent(byte[] bytes,
-                                     ValidationContext validationContext) {
+    @Override
+    public void validate(byte[] bytes,
+                         ValidationContext validationContext) {
         try {
             log.debug("Validating json model content: " + new String(bytes));
             schemaLoader()

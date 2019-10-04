@@ -23,11 +23,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.activiti.cloud.organization.api.Model;
+import org.activiti.cloud.organization.api.ModelExtensionsValidator;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ModelValidationError;
-import org.activiti.cloud.organization.api.ModelValidator;
 import org.activiti.cloud.organization.api.ProcessModelType;
 import org.activiti.cloud.organization.api.ValidationContext;
+import org.activiti.cloud.organization.api.process.Extensions;
 import org.activiti.cloud.organization.converter.JsonConverter;
 import org.activiti.cloud.organization.core.error.ModelingException;
 import org.activiti.cloud.organization.core.error.SemanticModelValidationException;
@@ -35,7 +36,6 @@ import org.activiti.cloud.organization.core.error.SyntacticModelValidationExcept
 import org.activiti.cloud.services.organization.converter.BpmnProcessModelContent;
 import org.activiti.cloud.services.organization.converter.ProcessModelContentConverter;
 import org.activiti.cloud.services.organization.validation.JsonSchemaModelValidator;
-import org.activiti.cloud.services.organization.validation.extensions.ProcessExtensionsValidator;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -46,8 +46,8 @@ import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_T
 import static org.apache.commons.lang3.StringUtils.removeStart;
 
 @Component
-@ConditionalOnMissingBean(name = "ExtensionsModelValidator")
-public class ExtensionsModelValidator extends JsonSchemaModelValidator  implements ModelValidator {
+@ConditionalOnMissingBean(name = "ProcessExtensionsModelValidator")
+public class ProcessExtensionsModelValidator extends JsonSchemaModelValidator implements ModelExtensionsValidator {
 
     public static final String UNKNOWN_PROCESS_ID_VALIDATION_ERROR_PROBLEM = "Unknown process id in process extensions: %s";
     public static final String UNKNOWN_PROCESS_ID_VALIDATION_ERROR_DESCRIPTION = "The process extensions are bound to an unknown process id '%s'";
@@ -59,26 +59,30 @@ public class ExtensionsModelValidator extends JsonSchemaModelValidator  implemen
     private final ProcessModelType processModelType;
 
     private final JsonConverter<Model> extensionsConverter;
+    
+    private JsonConverter<Extensions> jsonExtensionsConverter;
 
     private final ProcessModelContentConverter processModelContentConverter;
 
     @Autowired
-    public ExtensionsModelValidator(SchemaLoader processExtensionsSchemaLoader,
+    public ProcessExtensionsModelValidator(SchemaLoader processExtensionsSchemaLoader,
                                     Set<ProcessExtensionsValidator> processExtensionsValidators,
                                     ProcessModelType processModelType,
                                     JsonConverter<Model> extensionsConverter,
+                                    JsonConverter<Extensions> jsonExtensionsConverter,
                                     ProcessModelContentConverter processModelContentConverter) {
         this.processExtensionsSchemaLoader = processExtensionsSchemaLoader;
         this.processExtensionsValidators = processExtensionsValidators;
         this.processModelType = processModelType;
         this.extensionsConverter = extensionsConverter;
+        this.jsonExtensionsConverter = jsonExtensionsConverter;
         this.processModelContentConverter = processModelContentConverter;
     }
 
     @Override
-    public void validateModelContent(byte[] bytes,
+    public void validate(byte[] bytes,
                                      ValidationContext validationContext) {
-        super.validateModelContent(bytes,
+        super.validate(bytes,
                                    validationContext);
 
         if (!validationContext.isEmpty()) {
@@ -126,10 +130,11 @@ public class ExtensionsModelValidator extends JsonSchemaModelValidator  implemen
     protected Stream<ModelValidationError> validateModelExtensions(Model model,
                                                                    ValidationContext validationContext,
                                                                    BpmnProcessModelContent bpmnModel) {
-        return Optional.ofNullable(model.getExtensions())
-                .map(extensions -> processExtensionsValidators
+        
+        return jsonExtensionsConverter.tryConvertToEntity(model.getExtensions()).
+                map(extensions -> processExtensionsValidators
                         .stream()
-                        .flatMap(validator -> validator.validate(extensions,
+                        .flatMap(validator -> validator.validateExtensions(extensions,
                                                                  bpmnModel,
                                                                  validationContext)))
                 .orElseGet(Stream::empty);

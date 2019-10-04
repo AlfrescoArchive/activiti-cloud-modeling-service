@@ -17,16 +17,16 @@
 package org.activiti.cloud.organization.api;
 
 /**
- * Business logic related with validation of a model content
+ * Business logic related with validation of a model
  */
 public interface ModelValidator extends ModelValidationErrorProducer {
-
+    
     /**
-     * Validate the given model content.
-     * @param modelContent the model content to validate
+     * Validate the given model.
+     * @param modelFile the model to validate
      * @param validationContext the validation context
      */
-    void validateModelContent(byte[] modelContent,
+    void validate(byte[] modelFile,
                               ValidationContext validationContext);
 
     /**

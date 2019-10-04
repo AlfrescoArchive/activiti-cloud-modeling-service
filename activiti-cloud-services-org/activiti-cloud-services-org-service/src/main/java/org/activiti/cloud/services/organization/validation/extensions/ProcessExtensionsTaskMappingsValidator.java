@@ -50,7 +50,7 @@ public class ProcessExtensionsTaskMappingsValidator implements ProcessExtensions
     }
 
     @Override
-    public Stream<ModelValidationError> validate(Extensions extensions,
+    public Stream<ModelValidationError> validateExtensions(Extensions extensions,
                                                  BpmnProcessModelContent bpmnModel,
                                                  ValidationContext validationContext) {
         Set<FlowNode> availableTasks = bpmnModel.findAllNodes();

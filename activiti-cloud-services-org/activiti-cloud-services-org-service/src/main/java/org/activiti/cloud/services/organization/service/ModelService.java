@@ -16,16 +16,28 @@
 
 package org.activiti.cloud.services.organization.service;
 
+import static org.activiti.cloud.organization.api.ProcessModelType.PROCESS;
+import static org.activiti.cloud.organization.api.ValidationContext.EMPTY_CONTEXT;
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_TYPE_JSON;
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.JSON;
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.isJsonContentType;
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.removeExtension;
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.setExtension;
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.toJsonFilename;
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
+import static org.apache.commons.lang3.StringUtils.removeEnd;
+
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 import javax.transaction.Transactional;
 
 import org.activiti.cloud.organization.api.Model;
-import org.activiti.cloud.organization.api.ModelContent;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.Project;
 import org.activiti.cloud.organization.api.ValidationContext;
@@ -47,19 +59,8 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.activiti.cloud.organization.api.ProcessModelType.PROCESS;
-import static org.activiti.cloud.organization.api.ValidationContext.EMPTY_CONTEXT;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_TYPE_JSON;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.JSON;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.isJsonContentType;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.removeExtension;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.setExtension;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.toJsonFilename;
-import static org.apache.commons.lang3.StringUtils.removeEnd;
-
 /**
- * Business logic related to {@link Model} entities
- * including process models, form models, connectors, data models and decision table models.
+ * Business logic related to {@link Model} entities including process models, form models, connectors, data models and decision table models.
  */
 @Service
 @PreAuthorize("hasRole('ACTIVITI_MODELER')")
@@ -74,28 +75,28 @@ public class ModelService {
 
     private final ModelContentService modelContentService;
 
+    private final ModelExtensionsService modelExtensionsService;
+
     private final JsonConverter<Model> jsonConverter;
 
     @Autowired
     public ModelService(ModelRepository modelRepository,
                         ModelTypeService modelTypeService,
                         ModelContentService modelContentService,
+                        ModelExtensionsService modelExtensionsService,
                         JsonConverter<Model> jsonConverter) {
         this.modelRepository = modelRepository;
         this.modelTypeService = modelTypeService;
         this.modelContentService = modelContentService;
         this.jsonConverter = jsonConverter;
+        this.modelExtensionsService = modelExtensionsService;
     }
 
     public List<Model> getAllModels(Project project) {
-        return modelTypeService.getAvailableModelTypes()
-                .stream()
-                .map(modelType -> getModels(project,
-                                            modelType,
-                                            Pageable.unpaged()))
-                .map(Page::getContent)
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
+        return modelTypeService.getAvailableModelTypes().stream().map(modelType -> getModels(project,
+                                                                                             modelType,
+                                                                                             Pageable.unpaged()))
+                .map(Page::getContent).flatMap(List::stream).collect(Collectors.toList());
     }
 
     public Page<Model> getModels(Project project,
@@ -110,8 +111,12 @@ public class ModelService {
                              Model model) {
         ModelType modelType = findModelType(model);
         model.setProject(project);
-        if (model.getExtensions() == null && PROCESS.equals(modelType.getName())) {
-            model.setExtensions(new Extensions());
+        if (model.getExtensions() == null) {
+            if (PROCESS.equals(modelType.getName())) {
+                model.setExtensions(new Extensions().getAsMap());
+            } else if (isJsonContentType(model.getContentType())) {
+                model.setExtensions(new HashMap<String, Object>());
+            }
         }
         return modelRepository.createModel(model);
     }
@@ -141,64 +146,29 @@ public class ModelService {
     public Model newModelInstance() {
         try {
             return (Model) modelRepository.getModelType().getConstructor().newInstance();
-        } catch (InstantiationException |
-                IllegalAccessException |
-                NoSuchMethodException |
-                InvocationTargetException e) {
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
 
     public Optional<FileContent> getModelExtensionsFileContent(Model model) {
-        if (isJsonContentType(model.getContentType())) {
+        if (model.getExtensions() == null && isJsonContentType(model.getContentType())) {
             return Optional.empty();
         }
-
         Model fullModel = findModelById(model.getId()).orElse(model);
-        byte[] modelContent = modelRepository.getModelContent(model);
-        final String bpmnModelId = modelContentService
-                .findModelContentConverter(model.getType())
-                .flatMap(converter -> converter.convertToModelContent(modelContent))
-                .map(ModelContent::getId)
-                .orElseGet(() -> modelContentService.getModelContentId(model));
-
         Model modelToFile = newModelInstance(fullModel.getType(),
                                              fullModel.getName());
-        modelToFile.setId(bpmnModelId);
+        modelToFile.setId(model.getId());
         modelToFile.setExtensions(fullModel.getExtensions());
 
-        FileContent metadataFileContent = new FileContent(getExtensionsFilename(model),
-                                                          CONTENT_TYPE_JSON,
-                                                          jsonConverter.convertToJsonBytes(modelToFile));
-        return Optional.of(metadataFileContent);
-    }
-    
-    public Optional<FileContent> getModelMetadataFileContent(Model model) {
-        Model fullModel = findModelById(model.getId()).orElse(model);
-        
-        if(model.getMetadata()==null || model.getMetadata().isEmpty()) {
-            return Optional.empty();
-        }
-        
-        
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            FileContent metadataFileContent = new FileContent(getMetadataFilename(model),
-                                  CONTENT_TYPE_JSON,
-                                  objectMapper.writeValueAsString(fullModel.getMetadata()).getBytes());
-            return Optional.of(metadataFileContent);
-        } catch (JsonProcessingException e) {
-            logger.error("Unable to generate model metadata for model with id: "+ model.getId(), e);
-            return Optional.empty();
-        }
+        FileContent extensionsFileContent = new FileContent(getExtensionsFilename(model),
+                                                            CONTENT_TYPE_JSON,
+                                                            jsonConverter.convertToJsonBytes(modelToFile));
+        return Optional.of(extensionsFileContent);
     }
 
     public String getExtensionsFilename(Model model) {
         return toJsonFilename(model.getName() + findModelType(model).getExtensionsFileSuffix());
-    }
-
-    public String getMetadataFilename(Model model) {
-        return toJsonFilename(model.getName() + findModelType(model).getMetadataFileSuffix());
     }
 
     public FileContent getModelContentFile(Model model) {
@@ -236,9 +206,10 @@ public class ModelService {
                 .flatMap(validator -> validator.convertToModelContent(fixedFileContent.getFileContent()))
                 .ifPresent(modelContent -> modelToBeUpdate.setTemplate(modelContent.getTemplate()));
 
-        modelContentService.findContentUploadListener(modelToBeUpdate.getType()).ifPresent(listener -> listener.execute(modelToBeUpdate,
-                                                                                                                        fixedFileContent));
-
+        emptyIfNull(modelContentService.findContentUploadListeners(modelToBeUpdate.getType()))
+                .stream()
+                .forEach(listener -> listener.execute(modelToBeUpdate,fixedFileContent));
+        
         return modelRepository.updateModelContent(modelToBeUpdate,
                                                   fixedFileContent);
     }
@@ -308,7 +279,6 @@ public class ModelService {
                                      ValidationContext validationContext) {
         validateModelContent(model.getType(),
                              modelRepository.getModelContent(model),
-                             model.getContentType(),
                              validationContext);
     }
 
@@ -317,12 +287,12 @@ public class ModelService {
         ValidationContext validationContext = !modelTypeService.isJson(findModelType(model)) && fileContent.getContentType().equals(CONTENT_TYPE_JSON)
                 ? EMPTY_CONTEXT
                 : Optional.ofNullable(model.getProject()).map(this::createValidationContext).orElseGet(() -> createValidationContext(model));
-        validateModelContent(model.getType(),
-                             fileContent.getFileContent(),
-                             fileContent.getContentType(),
-                             validationContext);
-    }
 
+            validateModelContent(model.getType(),
+                                 fileContent.getFileContent(),
+                                 validationContext);     
+    }
+    
     private ValidationContext createValidationContext(Project project) {
         return new ProjectValidationContext(getAllModels(project));
     }
@@ -336,50 +306,50 @@ public class ModelService {
                                      ValidationContext validationContext) {
         validateModelContent(model.getType(),
                              fileContent.getFileContent(),
-                             fileContent.getContentType(),
                              validationContext);
     }
 
     private void validateModelContent(String modelType,
                                       byte[] modelContent,
-                                      String contentType,
                                       ValidationContext validationContext) {
-        modelContentService.findModelValidator(modelType,
-                                               contentType)
-                .ifPresent(modelValidator -> modelValidator.validateModelContent(modelContent,
-                                                                                 validationContext));
+        emptyIfNull(modelContentService.findModelValidators(modelType))
+        .stream()
+        .forEach(modelValidator -> modelValidator.validateModelContent(modelContent,
+                                                                       validationContext));
     }
 
-    public void validateModelMetadata(Model model,
-                                      ValidationContext validationContext) {
-        validateModelMetadata(model.getType(),
-                              modelRepository.getModelContent(model),
-                              validationContext);
+    public void validateModelExtensions(Model model,
+                                        ValidationContext validationContext) {
+        validateModelExtensions(model.getType(),
+                                modelRepository.getModelContent(model),
+                                validationContext);
     }
 
-    public void validateModelMetadata(Model model,
-                                      FileContent fileContent) {
+    public void validateModelExtensions(Model model,
+                                        FileContent fileContent) {
         ValidationContext validationContext = !modelTypeService.isJson(findModelType(model))
                 ? EMPTY_CONTEXT
                 : Optional.ofNullable(model.getProject()).map(this::createValidationContext).orElseGet(() -> createValidationContext(model));
-        validateModelMetadata(model.getType(),
-                              fileContent.getFileContent(),
-                              validationContext);
+        validateModelExtensions(model.getType(),
+                                fileContent.getFileContent(),
+                                validationContext);
     }
 
-    public void validateModelMetadata(Model model,
-                                      FileContent fileContent,
-                                      ValidationContext validationContext) {
-        validateModelMetadata(model.getType(),
-                              fileContent.getFileContent(),
-                              validationContext);
+    public void validateModelExtensions(Model model,
+                                        FileContent fileContent,
+                                        ValidationContext validationContext) {
+        validateModelExtensions(model.getType(),
+                                fileContent.getFileContent(),
+                                validationContext);
     }
 
-    private void validateModelMetadata(String modelType,
-                                       byte[] modelContent,
-                                       ValidationContext validationContext) {
-        modelContentService.findMetadataValidator(modelType).ifPresent(modelValidator -> modelValidator.validateModelContent(modelContent,
-                                                                                                                             validationContext));
+    private void validateModelExtensions(String modelType,
+                                         byte[] modelContent,
+                                         ValidationContext validationContext) {
+        emptyIfNull(modelExtensionsService.findExtensionsValidators(modelType))
+        .stream()
+        .forEach(modelValidator -> modelValidator.validateModelExtensions(modelContent,
+                                                                          validationContext));
     }
 
     private ModelType findModelType(Model model) {
