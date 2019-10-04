@@ -161,8 +161,7 @@ public class ProjectService {
                                                            folderName);
             modelService.getModelExtensionsFileContent(model).ifPresent(extensionFileContent -> zipBuilder.appendFile(extensionFileContent,
                                                                                                                       folderName));
-            modelService.getModelMetadataFileContent(model).ifPresent(metadataFileContent -> zipBuilder.appendFile(metadataFileContent,
-                                                                                                                   folderName));
+            
         }));
         return zipBuilder.toZipFileContent();
     }
@@ -189,14 +188,14 @@ public class ProjectService {
                                             if (fileContent.isJson()) {
                                                 String modelName = removeExtension(fileContent.getFilename(),
                                                                                    JSON);
-                                                if (!modelName.endsWith(modelType.getMetadataFileSuffix())) {
+                                                if (!modelName.endsWith(modelType.getExtensionsFileSuffix())) {
                                                     projectHolder.addModelJsonFile(modelName,
                                                                                    modelType,
                                                                                    fileContent);
                                                 } else {
                                                     //Add metadata to the projectHolder
-                                                    projectHolder.addMetadata(StringUtils.removeEnd(modelName,
-                                                                                                    modelType.getMetadataFileSuffix()),
+                                                    projectHolder.addModelExtension(StringUtils.removeEnd(modelName,
+                                                                                                    modelType.getExtensionsFileSuffix()),
                                                                               modelType,
                                                                               fileContent);
                                                 }
@@ -228,14 +227,43 @@ public class ProjectService {
                                                                                                                          fileContent));
             }
             //Update model with metadata
-            projectHolder.getModelMetadata(createdModel).ifPresent(fileMetadata -> {
-                jsonMetadataConverter.tryConvertToEntity(fileMetadata.getFileContent()).ifPresent(createdModel::setMetadata);
+            projectHolder.getModelExtensions(createdModel).ifPresent(fileMetadata -> {
+                jsonMetadataConverter.tryConvertToEntity(fileMetadata.getFileContent()).ifPresent(createdModel::setExtensions);
                 modelService.updateModel(createdModel,
                                          createdModel);
             });
         });
         modelService.cleanModelIdList();
         return createdProject;
+    }
+    
+    private void processZipEntryFile(ProjectHolder projectHolder, FileContent fileContent, ModelType modelType) {
+        String modelName = removeExtension(fileContent.getFilename(),
+                                           JSON);       
+        if(isProjectExtension(modelName, modelType, fileContent)){
+            modelName = StringUtils.removeEnd(modelName, modelType.getExtensionsFileSuffix());
+            projectHolder.addModelExtension(modelName, modelType, fileContent);
+        }else if(isProjectContent(modelName, modelType, fileContent)){
+             modelService.contentFilenameToModelName(modelName,modelType)
+                 .ifPresent(fixedModelName -> projectHolder.addModelContent(fixedModelName, modelType, fileContent));
+        }else {
+            if(modelName.endsWith(modelType.getExtensionsFileSuffix())) {
+                modelName = StringUtils.removeEnd(modelName, modelType.getExtensionsFileSuffix());
+            }
+            projectHolder.addModelJsonFile(modelName, modelType, fileContent);
+        }
+    }
+
+    private boolean isProjectExtension(String modelName,
+                                       ModelType modelType,
+                                       FileContent fileContent) {
+        return fileContent.isJson() && (modelName.endsWith(modelType.getExtensionsFileSuffix()) && modelTypeService.isJson(modelType));
+    }
+
+    private boolean isProjectContent(String modelName,
+                                     ModelType modelType,
+                                     FileContent fileContent) {
+        return !fileContent.isJson() || (!modelName.endsWith(modelType.getExtensionsFileSuffix()) && !modelTypeService.isJson(modelType));
     }
 
     public void validateProject(Project project) {
@@ -268,14 +296,6 @@ public class ProjectService {
             modelService.getModelExtensionsFileContent(model).ifPresent(extensionsFileContent -> modelService.validateModelContent(model,
                                                                                                                                    extensionsFileContent,
                                                                                                                                    validationContext));
-        } catch (SemanticModelValidationException validationException) {
-            validationErrors.addAll(validationException.getValidationErrors());
-        }
-
-        try {
-            modelService.getModelMetadataFileContent(model).ifPresent(metadataFileContent -> modelService.validateModelMetadata(model,
-                                                                                                                                metadataFileContent,
-                                                                                                                                validationContext));
         } catch (SemanticModelValidationException validationException) {
             validationErrors.addAll(validationException.getValidationErrors());
         }

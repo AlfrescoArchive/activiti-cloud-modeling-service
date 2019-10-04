@@ -43,7 +43,7 @@ public class ProcessExtensionsProcessVariablesValidator implements ProcessExtens
     public static final String UNKNOWN_PROCESS_VARIABLE_VALIDATION_ERROR_DESCRIPTION = "The extensions for process '%s' contains mappings for an unknown process variable '%s'";
 
     @Override
-    public Stream<ModelValidationError> validate(Extensions extensions,
+    public Stream<ModelValidationError> validateExtensions(Extensions extensions,
                                                  BpmnProcessModelContent bpmnModel,
                                                  ValidationContext validationContext) {
         Set<String> availableProcessVariables = getAvailableProcessVariables(extensions);
@@ -51,7 +51,7 @@ public class ProcessExtensionsProcessVariablesValidator implements ProcessExtens
         return extensions.getVariablesMappings().values()
                 .stream()
                 .flatMap(actionMappings -> actionMappings.entrySet().stream())
-                .flatMap(taskMappingEntry -> validateProcessVariableMapping(taskMappingEntry.getKey(),
+                .flatMap(taskMappingEntry -> this.validateProcessVariableMapping(taskMappingEntry.getKey(),
                                                                             taskMappingEntry.getValue(),
                                                                             bpmnModel.getId(),
                                                                             availableProcessVariables));

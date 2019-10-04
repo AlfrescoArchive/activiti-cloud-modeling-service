@@ -37,7 +37,7 @@ public class ProjectHolder {
 
     private final MultiKeyMap<String, FileContent> modelContentFilesMap = new MultiKeyMap<>();
     
-    private final MultiKeyMap<String, FileContent> metadataFilesMap = new MultiKeyMap<>();
+    private final MultiKeyMap<String, FileContent> extensionFilesMap = new MultiKeyMap<>();
 
     public ProjectHolder setProject(Project project) {
         if (this.project == null) {
@@ -65,10 +65,10 @@ public class ProjectHolder {
         return this;
     }
     
-    public ProjectHolder addMetadata(String modelName,
+    public ProjectHolder addModelExtension(String modelName,
                                          ModelType modelType,
                                          FileContent fileContent) {
-        metadataFilesMap.put(key(modelName,
+        extensionFilesMap.put(key(modelName,
                                      modelType),
                                  fileContent);
         return this;
@@ -89,11 +89,11 @@ public class ProjectHolder {
                 .map(modelContentFilesMap::get);
     }
     
-    public Optional<FileContent> getModelMetadata(Model model) {
+    public Optional<FileContent> getModelExtensions(Model model) {
         return Optional.ofNullable(model.getName())
                 .map(name -> key(name,
                                  model.getType()))
-                .map(metadataFilesMap::get);
+                .map(extensionFilesMap::get);
     }
 
     private MultiKey<String> key(String name,

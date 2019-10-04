@@ -15,13 +15,15 @@
  */
 package org.activiti.cloud.services.organization.validation;
 
+import java.util.Set;
+
 import org.activiti.cloud.organization.api.ConnectorModelType;
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ProcessModelType;
 import org.activiti.cloud.organization.converter.JsonConverter;
 import org.activiti.cloud.services.organization.converter.ConnectorModelContentConverter;
 import org.activiti.cloud.services.organization.converter.ProcessModelContentConverter;
-import org.activiti.cloud.services.organization.validation.extensions.ExtensionsModelValidator;
+import org.activiti.cloud.services.organization.validation.extensions.ExtensionsSchemaValidator;
 import org.activiti.cloud.services.organization.validation.extensions.ProcessExtensionsProcessVariablesValidator;
 import org.activiti.cloud.services.organization.validation.extensions.ProcessExtensionsTaskMappingsValidator;
 import org.activiti.cloud.services.organization.validation.extensions.ProcessExtensionsValidator;
@@ -44,8 +46,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Set;
-
 /**
  * Configuration for process model validator
  */
@@ -62,16 +62,8 @@ public class ProcessModelValidatorConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public ExtensionsModelValidator extensionsModelValidator(SchemaLoader processExtensionsSchemaLoader,
-                                        Set<ProcessExtensionsValidator> processExtensionsValidators,
-                                        ProcessModelType processModelType,
-                                        JsonConverter<Model> extensionsConverter,
-                                        ProcessModelContentConverter processModelContentConverter) {
-        return new ExtensionsModelValidator(processExtensionsSchemaLoader,
-                                            processExtensionsValidators,
-                                            processModelType,
-                                            extensionsConverter,
-                                            processModelContentConverter);
+    public ExtensionsSchemaValidator extensionsModelValidator(SchemaLoader processExtensionsSchemaLoader) {
+        return new ExtensionsSchemaValidator(processExtensionsSchemaLoader);
     }
     
     @Bean
