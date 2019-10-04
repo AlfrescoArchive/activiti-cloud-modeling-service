@@ -16,7 +16,6 @@
 
 package org.activiti.cloud.services.organization.service;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -24,13 +23,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.activiti.cloud.organization.api.ModelContentValidator;
 import org.activiti.cloud.organization.api.ModelExtensionsValidator;
-import org.activiti.cloud.services.organization.validation.extensions.ExtensionsSchemaValidator;
+import org.activiti.cloud.services.organization.validation.extensions.ExtensionsModelValidator;
 import org.springframework.stereotype.Service;
 
 /**
- * Service for managing {@link ModelContentValidator}
+ * Service for managing {@link ModelExtensionsService}
  */
 @Service
 public class ModelExtensionsService {
@@ -38,7 +36,7 @@ public class ModelExtensionsService {
     private final Map<String, List<ModelExtensionsValidator>> modelExtensionsValidatorsMapByModelType;
 
     public ModelExtensionsService(Set<ModelExtensionsValidator> metadataValidators,
-                                  ExtensionsSchemaValidator extensionsSchemaValidator,
+                                  ExtensionsModelValidator extensionsModelValidator,
                                   ModelTypeService modelTypeService) {
         this.modelExtensionsValidatorsMapByModelType = metadataValidators.stream().filter(validator -> validator.getHandledModelType() != null)
                 .collect(Collectors.groupingBy(validator -> validator.getHandledModelType().getName()));
@@ -50,11 +48,11 @@ public class ModelExtensionsService {
                                                                                                                                                  ? Stream.concat(this.modelExtensionsValidatorsMapByModelType
                                                                                                                                                          .get(modelType.getName())
                                                                                                                                                          .stream(),
-                                                                                                                                                                 Stream.of(extensionsSchemaValidator))
+                                                                                                                                                                 Stream.of(extensionsModelValidator))
                                                                                                                                                          .collect(Collectors
                                                                                                                                                                  .toList())
                                                                                                                                                  : Collections
-                                                                                                                                                         .singletonList(extensionsSchemaValidator)));
+                                                                                                                                                         .singletonList(extensionsModelValidator)));
 
     }
 

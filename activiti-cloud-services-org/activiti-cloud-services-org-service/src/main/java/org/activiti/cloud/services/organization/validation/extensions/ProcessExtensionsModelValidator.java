@@ -47,7 +47,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnMissingBean(name = "ProcessExtensionsModelValidator")
-public class ProcessExtensionsModelValidator extends JsonSchemaModelValidator implements ModelExtensionsValidator {
+public class ProcessExtensionsModelValidator extends ExtensionsJsonSchemaValidator {
 
     public static final String UNKNOWN_PROCESS_ID_VALIDATION_ERROR_PROBLEM = "Unknown process id in process extensions: %s";
     public static final String UNKNOWN_PROCESS_ID_VALIDATION_ERROR_DESCRIPTION = "The process extensions are bound to an unknown process id '%s'";
@@ -58,8 +58,6 @@ public class ProcessExtensionsModelValidator extends JsonSchemaModelValidator im
 
     private final ProcessModelType processModelType;
 
-    private final JsonConverter<Model> extensionsConverter;
-    
     private JsonConverter<Extensions> jsonExtensionsConverter;
 
     private final ProcessModelContentConverter processModelContentConverter;
@@ -68,45 +66,16 @@ public class ProcessExtensionsModelValidator extends JsonSchemaModelValidator im
     public ProcessExtensionsModelValidator(SchemaLoader processExtensionsSchemaLoader,
                                     Set<ProcessExtensionsValidator> processExtensionsValidators,
                                     ProcessModelType processModelType,
-                                    JsonConverter<Model> extensionsConverter,
                                     JsonConverter<Extensions> jsonExtensionsConverter,
                                     ProcessModelContentConverter processModelContentConverter) {
         this.processExtensionsSchemaLoader = processExtensionsSchemaLoader;
         this.processExtensionsValidators = processExtensionsValidators;
         this.processModelType = processModelType;
-        this.extensionsConverter = extensionsConverter;
         this.jsonExtensionsConverter = jsonExtensionsConverter;
         this.processModelContentConverter = processModelContentConverter;
     }
 
     @Override
-    public void validate(byte[] bytes,
-                                     ValidationContext validationContext) {
-        super.validate(bytes,
-                                   validationContext);
-
-        if (!validationContext.isEmpty()) {
-            validateModelContentInContext(bytes,
-                                          validationContext);
-        }
-    }
-
-    protected void validateModelContentInContext(byte[] bytes,
-                                                 ValidationContext validationContext) {
-        List<ModelValidationError> validationExceptions =
-                validateModelExtensions(convertBytesToModel(bytes),
-                                        validationContext)
-                        .collect(Collectors.toList());
-        if (!validationExceptions.isEmpty()) {
-            throw new SemanticModelValidationException(
-                    "Semantic model validation errors encountered: " + validationExceptions
-                            .stream()
-                            .map(ModelValidationError::getDescription)
-                            .collect(Collectors.joining(",")),
-                    validationExceptions);
-        }
-    }
-
     protected Stream<ModelValidationError> validateModelExtensions(Model model,
                                                                    ValidationContext context) {
         return Optional.ofNullable(model.getId())
@@ -117,7 +86,7 @@ public class ProcessExtensionsModelValidator extends JsonSchemaModelValidator im
                 .map(Model::getContent)
                 .map(String::getBytes)
                 .flatMap(this::convertToBpmnModel)
-                .map(bpmnModel -> validateModelExtensions(model,
+                .map(bpmnModel -> validateBpmnModel(model,
                                                           context,
                                                           bpmnModel))
                 .orElseGet(() -> Stream.of(createModelValidationError(
@@ -127,7 +96,7 @@ public class ProcessExtensionsModelValidator extends JsonSchemaModelValidator im
                                model.getId()))));
     }
 
-    protected Stream<ModelValidationError> validateModelExtensions(Model model,
+    protected Stream<ModelValidationError> validateBpmnModel(Model model,
                                                                    ValidationContext validationContext,
                                                                    BpmnProcessModelContent bpmnModel) {
         
@@ -149,15 +118,6 @@ public class ProcessExtensionsModelValidator extends JsonSchemaModelValidator im
                 .findFirst();
     }
 
-    private Model convertBytesToModel(byte[] bytes) {
-        try {
-            return extensionsConverter.convertToEntity(bytes);
-        } catch (ModelingException ex) {
-            throw new SyntacticModelValidationException("Cannot convert json extensions to a model",
-                                                        ex);
-        }
-    }
-
     private Optional<BpmnProcessModelContent> convertToBpmnModel(byte[] bytes) {
         try {
             return processModelContentConverter.convertToModelContent(bytes);
@@ -170,11 +130,6 @@ public class ProcessExtensionsModelValidator extends JsonSchemaModelValidator im
     @Override
     public ModelType getHandledModelType() {
         return processModelType;
-    }
-
-    @Override
-    public String getHandledContentType() {
-        return CONTENT_TYPE_JSON;
     }
 
     @Override
