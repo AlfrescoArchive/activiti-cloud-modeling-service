@@ -16,6 +16,15 @@
 
 package org.activiti.cloud.services.organization.service;
 
+import static org.activiti.cloud.organization.api.ProcessModelType.PROCESS;
+import static org.activiti.cloud.organization.api.ValidationContext.EMPTY_CONTEXT;
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_TYPE_JSON;
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.JSON;
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.isJsonContentType;
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.removeExtension;
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.setExtension;
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.toJsonFilename;
+import static org.apache.commons.lang3.StringUtils.removeEnd;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
@@ -47,23 +56,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
-import static org.activiti.cloud.organization.api.ProcessModelType.PROCESS;
-import static org.activiti.cloud.organization.api.ValidationContext.EMPTY_CONTEXT;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_TYPE_JSON;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.JSON;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.isJsonContentType;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.removeExtension;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.setExtension;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.toJsonFilename;
-import static org.apache.commons.lang3.StringUtils.removeEnd;
+import java.lang.reflect.InvocationTargetException;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.transaction.Transactional;
 
 /**
  * Business logic related to {@link Model} entities
  * including process models, form models, connectors, data models and decision table models.
  */
-@Service
 @PreAuthorize("hasRole('ACTIVITI_MODELER')")
 @Transactional
 public class ModelService {
