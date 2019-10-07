@@ -82,21 +82,6 @@ public class ProcessModelContentConverter implements ModelContentConverter<BpmnP
                 .map(BpmnProcessModelContent::new);
     }
 
-    @Override
-    public byte[] convertAndFixModelContentId(byte[] bytes,
-                                              String modelContentId) {
-        return convertToModelContent(bytes)
-                .filter(modelContent -> !modelContentId.equals(modelContent.getId()))
-                .map(modelContent -> this.fixContentId(modelContent, modelContentId))
-                .map(this::convertToBytes)
-                .orElse(bytes);
-    }
-
-    private BpmnProcessModelContent fixContentId(BpmnProcessModelContent modelContent, String modelContentId) {
-       modelContent.setId(modelContentId);
-       return modelContent;
-    }
-
     public BpmnModel convertToBpmnModel(byte[] modelContent) throws IOException, XMLStreamException {
         try (InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(modelContent))) {
             XMLStreamReader xmlReader = createSafeXmlInputFactory().createXMLStreamReader(reader);

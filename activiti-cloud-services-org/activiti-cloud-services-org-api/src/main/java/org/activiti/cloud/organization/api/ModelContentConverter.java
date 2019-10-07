@@ -42,16 +42,4 @@ public interface ModelContentConverter<T extends ModelContent> {
      * @return the bytes array
      */
     byte[] convertToBytes(ModelContent modelContent);
-
-    /**
-     * Convert a bytes array to the handled model content entity, set the given id, and convert back to bytes array.
-     * If the id is already the expected one, it returns the given bytes unchanged.
-     * @param bytes the bytes to convert and fix
-     * @param modelContentId the correct model content id to set
-     * @return the fixed bytes array
-     */
-    default byte[] convertAndFixModelContentId(byte[] bytes,
-                                               String modelContentId) {
-        return bytes;
-    }
 }

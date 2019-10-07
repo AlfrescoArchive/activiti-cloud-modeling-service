@@ -216,9 +216,7 @@ public class ModelService {
 
     public Model updateModelContent(Model modelToBeUpdate,
                                     FileContent fileContent) {
-      FileContent fixedFileContent = this.modelIdentifiers.isEmpty() ?
-        fileContent :
-        checkAndFixModelContent(modelToBeUpdate, fileContent);
+      FileContent fixedFileContent = checkAndFixModelContent(modelToBeUpdate, fileContent);
 
         modelToBeUpdate.setContentType(fixedFileContent.getContentType());
         modelToBeUpdate.setContent(fixedFileContent.toString());
@@ -239,9 +237,12 @@ public class ModelService {
           fixedFileContent = this.createFixedProcessFileContent(model, fileContent);
           break;
         }
-        default:
-          fixedFileContent = this.createFixedModelFileContent(model, fileContent);
+        case "FORM":{
+          fixedFileContent = this.createFixedFormModelFileContent(model, fileContent);
           break;
+        }
+        default:
+          fixedFileContent = this.createFixedUIModelFileContent(model, fileContent);
       }
       return fixedFileContent;
   }
@@ -253,7 +254,20 @@ public class ModelService {
       this.convertModelContentToFile(modelContent, model));
   }
 
-  private FileContent createFixedModelFileContent(Model model, FileContent fileContent) {
+  private FileContent createFixedUIModelFileContent(Model model, FileContent fileContent) {
+    try {
+      ObjectNode jsonNode = (ObjectNode) objectMapper.readTree(fileContent.getFileContent());
+      String actualId = this.modelIdentifiers.get(jsonNode.get("id").asText());
+      if(actualId != null) {
+        jsonNode.put("id", actualId);
+      }
+      return new FileContent(fileContent.getFilename(), fileContent.getContentType(), objectMapper.writeValueAsBytes(jsonNode));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private FileContent createFixedFormModelFileContent(Model model, FileContent fileContent) {
     try {
       JsonNode jsonNode = objectMapper.readTree(fileContent.getFileContent());
       ObjectNode jFormRepresentation = (ObjectNode) jsonNode.get("formRepresentation");
@@ -302,9 +316,9 @@ public class ModelService {
     }
 
   public ModelContent createModelContentFromModel(Model model, FileContent fileContent) {
-    Optional modelContent = modelContentService.findModelContentConverter(model.getType())
-      .map(modelContentConverter -> modelContentConverter.convertToModelContent(fileContent.getFileContent())).get();
-    return (ModelContent) modelContent.get();
+    return (ModelContent) modelContentService.findModelContentConverter(model.getType())
+      .map(modelContentConverter -> modelContentConverter.convertToModelContent(fileContent.getFileContent()))
+      .orElse(Optional.empty()).get();
   }
 
   public Model importSingleModel(Project project,
@@ -329,20 +343,22 @@ public class ModelService {
 
     public Model importModelFromContent(Project project, ModelType modelType, FileContent fileContent) {
       Model model = null;
-      String convertedId = null;
-      if(modelTypeService.isJson(modelType)){
-        model = createModelFromContent(modelType, fileContent);
-        ModelContent modelContent = this.createModelContentFromModel(model, fileContent);
-        convertedId = modelContent.getId();
-      }else {
+      if(modelTypeService.isJson(modelType) || fileContent.getContentType().equalsIgnoreCase("application/json")){
         model = convertContentToModel(modelType, fileContent);
-        convertedId = model.getId();
+      }else {
+        model = createModelFromContent(modelType, fileContent);
       }
+      String convertedId =  model.getId() != null ? model.getId() : retrieveModelIdFromModelContent(model, fileContent);
       createModel(project, model);
       if(convertedId!= null) {
         modelIdentifiers.put(convertedId, String.join("-", model.getType().toLowerCase(), model.getId() ));
       }
       return model;
+    }
+
+    private String retrieveModelIdFromModelContent(Model model, FileContent fileContent) {
+      ModelContent modelContent = this.createModelContentFromModel(model, fileContent);
+      return modelContent.getId();
     }
 
     public Model convertContentToModel(ModelType modelType, FileContent fileContent) {
