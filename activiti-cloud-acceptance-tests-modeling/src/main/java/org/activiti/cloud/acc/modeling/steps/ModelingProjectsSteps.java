@@ -143,7 +143,7 @@ public class ModelingProjectsSteps extends ModelingContextSteps<Project> {
                         .hasEntries(
                                 toJsonFilename(currentProject.getName()),
                                 modelType.getFolderName() + "/",
-                                modelType.getFolderName() + "/" + toJsonFilename(modelName + modelType.getMetadataFileSuffix()),
+                                modelType.getFolderName() + "/" + toJsonFilename(modelName + modelType.getExtensionsFileSuffix()),
                                 modelType.getFolderName() + "/" + setExtension(modelName,
                                                                                modelType.getContentFileExtension())
                         )
@@ -151,7 +151,7 @@ public class ModelingProjectsSteps extends ModelingContextSteps<Project> {
                                                   jsonContent -> jsonContent
                                                           .node("name").isEqualTo(currentProject.getName()))
                         .hasJsonContentSatisfying(
-                                modelType.getFolderName() + "/" + toJsonFilename(modelName + modelType.getMetadataFileSuffix()),
+                                modelType.getFolderName() + "/" + toJsonFilename(modelName + modelType.getExtensionsFileSuffix()),
                                 jsonContent -> {
                                     jsonContent.node("id").matches(startsWith("process-"));
                                     jsonContent.node("name").isEqualTo(modelName);
