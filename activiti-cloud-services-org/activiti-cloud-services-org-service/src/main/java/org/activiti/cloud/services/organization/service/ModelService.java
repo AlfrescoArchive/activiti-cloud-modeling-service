@@ -216,7 +216,9 @@ public class ModelService {
 
     public Model updateModelContent(Model modelToBeUpdate,
                                     FileContent fileContent) {
-      FileContent fixedFileContent = checkAndFixModelContent(modelToBeUpdate, fileContent);
+      FileContent fixedFileContent = this.modelIdentifiers.isEmpty()?
+        fileContent:
+        checkAndFixModelContent(modelToBeUpdate, fileContent);
 
         modelToBeUpdate.setContentType(fixedFileContent.getContentType());
         modelToBeUpdate.setContent(fixedFileContent.toString());
@@ -357,8 +359,11 @@ public class ModelService {
     }
 
     private String retrieveModelIdFromModelContent(Model model, FileContent fileContent) {
-      ModelContent modelContent = this.createModelContentFromModel(model, fileContent);
-      return modelContent.getId();
+      ModelContent modelContent = null;
+      if(model.getType() != "DECISION") {
+        modelContent = this.createModelContentFromModel(model, fileContent);
+      }
+      return modelContent != null ? modelContent.getId() : null;
     }
 
     public Model convertContentToModel(ModelType modelType, FileContent fileContent) {
