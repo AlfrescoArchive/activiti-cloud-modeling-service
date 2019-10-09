@@ -1,5 +1,6 @@
 package org.activiti.cloud.services.organization.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelContent;
 import org.activiti.cloud.organization.api.ModelContentConverter;
@@ -31,11 +32,13 @@ public class OrgServiceAutoConfiguration {
     public ModelService modelService(ModelRepository modelRepository,
                                      ModelTypeService modelTypeService,
                                      ModelContentService modelContentService,
-                                     JsonConverter<Model> jsonConverter) {
+                                     JsonConverter<Model> jsonConverter,
+                                     ObjectMapper objectMapper) {
         return new ModelService(modelRepository,
                                 modelTypeService,
                                 modelContentService,
-                                jsonConverter);
+                                jsonConverter,
+                                objectMapper);
 
     }
 
