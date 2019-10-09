@@ -23,7 +23,7 @@ public interface ModelContent {
 
   String getId();
 
-  void setId(String newId);
+  void setId(String id);
 
   String getTemplate();
 }
