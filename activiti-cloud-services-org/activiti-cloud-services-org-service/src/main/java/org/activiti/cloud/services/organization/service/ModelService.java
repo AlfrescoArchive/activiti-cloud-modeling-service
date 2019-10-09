@@ -114,17 +114,13 @@ public class ModelService {
       pageable);
   }
 
-  public Model buildNewModelObject(String type,
-                                   String name) {
-    Model model = createNewModelObject();
-    model.setType(type);
-    model.setName(name);
-    return model;
-  }
-
-  public Model createNewModelObject() {
+  public Model buildModel(String type,
+                          String name) {
     try {
-      return (Model) modelRepository.getModelType().getConstructor().newInstance();
+      Model model = (Model) modelRepository.getModelType().getConstructor().newInstance();
+      model.setType(type);
+      model.setName(name);
+      return model;
     } catch (InstantiationException |
       IllegalAccessException |
       NoSuchMethodException |
@@ -176,7 +172,7 @@ public class ModelService {
       .map(ModelContent::getId)
       .orElseGet(() -> modelContentService.getModelContentId(model));
 
-    Model modelToFile = buildNewModelObject(fullModel.getType(), fullModel.getName());
+    Model modelToFile = buildModel(fullModel.getType(), fullModel.getName());
     modelToFile.setId(bpmnModelId);
     modelToFile.setExtensions(fullModel.getExtensions());
 
@@ -221,7 +217,7 @@ public class ModelService {
                                   FileContent fileContent) {
     FileContent fixedFileContent = this.modelIdentifiers.isEmpty()?
       fileContent:
-      checkAndFixModelContent(modelToBeUpdate, fileContent);
+      overrideModelContentId(modelToBeUpdate, fileContent);
 
     modelToBeUpdate.setContentType(fixedFileContent.getContentType());
     modelToBeUpdate.setContent(fixedFileContent.toString());
@@ -235,7 +231,7 @@ public class ModelService {
   }
 
 
-  public FileContent checkAndFixModelContent(Model model, FileContent fileContent) {
+  public FileContent overrideModelContentId(Model model, FileContent fileContent) {
     FileContent fixedFileContent = null;
     switch (model.getType()){
       case "PROCESS": {
@@ -388,7 +384,7 @@ public class ModelService {
                                       FileContent fileContent) {
     return contentFilenameToModelName(fileContent.getFilename(),
       modelType)
-      .map(modelName -> buildNewModelObject(modelType.getName(),
+      .map(modelName -> buildModel(modelType.getName(),
         modelName))
       .orElseThrow(() -> new ImportModelException(MessageFormat.format(
         "Unexpected extension was found for file to import model of type {0}: {1}",
