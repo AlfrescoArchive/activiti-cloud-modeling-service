@@ -760,7 +760,7 @@ public class ProjectControllerIT {
                 // THEN
                 .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name",
+                .andExpect(jsonPath("$.entry.name",
                                     is("application-xy")));
     }
 

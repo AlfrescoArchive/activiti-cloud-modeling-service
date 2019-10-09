@@ -82,7 +82,7 @@ public class ConnectorModelControllerIT {
                       project.getId())
                 .then()
                 .expect(status().isCreated())
-                .body("name",
+                .body("entry.name",
                       equalTo("connector-name"));
     }
 
