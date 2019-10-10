@@ -93,8 +93,10 @@ public class ProjectService {
      * @param pageable the pagination information
      * @return the page
      */
-    public Page<Project> getProjects(Pageable pageable) {
-        return projectRepository.getProjects(pageable);
+    public Page<Project> getProjects(Pageable pageable,
+                                     String name) {
+        return projectRepository.getProjects(pageable,
+                                             name);
     }
 
     /**
@@ -103,6 +105,7 @@ public class ProjectService {
      * @return the created project
      */
     public Project createProject(Project project) {
+        project.setId(null);
         return projectRepository.createProject(project);
     }
 
@@ -196,18 +199,12 @@ public class ProjectService {
                 .orElseThrow(() -> new ImportProjectException("No valid project entry found to import: " + file.getOriginalFilename()));
 
         projectHolder.getModelJsonFiles().forEach(modelJsonFile -> {
-           Model createdModel;
-            if (modelTypeService.isJson(modelJsonFile.getModelType())) {
-                createdModel = modelService.importModel(createdProject,
-                                         modelJsonFile.getModelType(),
-                                         modelJsonFile.getFileContent());
-            } else {
-                createdModel = modelService.importJsonModel(createdProject,
-                                                                  modelJsonFile.getModelType(),
-                                                                  modelJsonFile.getFileContent());
-                projectHolder.getModelContentFile(createdModel)
-                        .ifPresent(fileContent -> modelService.updateModelContent(createdModel,
-                                                                                  fileContent));
+            Model createdModel = modelService.importModel(createdProject, modelJsonFile.getModelType(), modelJsonFile.getFileContent());
+            if(modelTypeService.isJson(modelJsonFile.getModelType())){
+                modelService.updateModelContent(createdModel, modelJsonFile.getFileContent());
+            }else{
+              projectHolder.getModelContentFile(createdModel)
+                .ifPresent(fileContent -> modelService.updateModelContent(createdModel, fileContent));
             }
           //Update model with metadata
             projectHolder.getModelExtensions(createdModel)
@@ -217,6 +214,7 @@ public class ProjectService {
                             modelService.updateModel(createdModel, createdModel);
                         });
         });
+        modelService.cleanModelIdList();
         return createdProject;
     }
     

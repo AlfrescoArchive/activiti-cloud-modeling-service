@@ -134,6 +134,47 @@ public class ProjectControllerIT {
     }
 
     @Test
+    public void testGetProjectsFilteredByName() throws Exception {
+
+        // GIVEN
+        projectRepository.createProject(project("project1"));
+        projectRepository.createProject(project("project2"));
+
+        // WHEN
+        mockMvc.perform(get("{version}/projects?name=project1",
+                            RepositoryRestConfig.API_VERSION))
+                // THEN
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$._embedded.projects",
+                                    hasSize(1)))
+                .andExpect(jsonPath("$._embedded.projects[0].name",
+                                    is("project1")));
+    }
+
+    @Test
+    public void testGetProjectsFilteredByContainingName() throws Exception {
+
+        // GIVEN
+        projectRepository.createProject(project("project-main-1"));
+        projectRepository.createProject(project("project-main-2"));
+        projectRepository.createProject(project("project-secondary-2"));
+
+        // WHEN
+        mockMvc.perform(get("{version}/projects?name=main",
+                            RepositoryRestConfig.API_VERSION))
+                // THEN
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$._embedded.projects",
+                                    hasSize(2)))
+                .andExpect(jsonPath("$._embedded.projects[0].name",
+                                    is("project-main-1")))
+                .andExpect(jsonPath("$._embedded.projects[1].name",
+                                    is("project-main-2")));
+    }
+
+    @Test
     public void testGetProject() throws Exception {
         // GIVEN
         Project project = projectRepository.createProject(project("existing-project"));
@@ -301,7 +342,7 @@ public class ProjectControllerIT {
                                                    "movies",
                                                    resourceAsByteArray("connector/movies.json")));
 
-        Model processModel = modelService.importModel(project,
+        Model processModel = modelService.importSingleModel(project,
                                                       processModelType,
                                                       processFileContent("process-model",
                                                                          resourceAsByteArray("process/RankMovie.bpmn20.xml")));
@@ -405,7 +446,7 @@ public class ProjectControllerIT {
     public void exportProjectWithNoAssigneeShouldReturnErrors() throws Exception {
         // GIVEN
         ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("project-with-models"));
-        modelService.importModel(project,
+        modelService.importSingleModel(project,
                                  processModelType,
                                  processFileContent("process-model",
                                                     resourceAsByteArray("process/no-assignee.bpmn20.xml")));
@@ -494,7 +535,7 @@ public class ProjectControllerIT {
     public void exportProjectWithProcessExtensionsForUnknownTask() throws Exception {
         // GIVEN
         ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("invalid-project"));
-        Model processModel = modelService.importModel(project,
+        Model processModel = modelService.importSingleModel(project,
                                                       processModelType,
                                                       processFileContent("RankMovie",
                                                                          resourceAsByteArray("process/RankMovie.bpmn20.xml")));
@@ -523,7 +564,7 @@ public class ProjectControllerIT {
     public void exportProjectWithProcessExtensionsForUnknownOutputProcessVariableMapping() throws Exception {
         // GIVEN
         ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("invalid-project"));
-        Model processModel = modelService.importModel(project,
+        Model processModel = modelService.importSingleModel(project,
                                                       processModelType,
                                                       processFileContent("RankMovie",
                                                                          resourceAsByteArray("process/RankMovie.bpmn20.xml")));
@@ -552,7 +593,7 @@ public class ProjectControllerIT {
     public void exportProjectWithProcessExtensionsForConnectorWithoutInputsOutputs() throws Exception {
         // GIVEN
         ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("invalid-project"));
-        Model processModel = modelService.importModel(project,
+        Model processModel = modelService.importSingleModel(project,
                                                       processModelType,
                                                       processFileContent("RankMovie",
                                                                          resourceAsByteArray("process/RankMovie.bpmn20.xml")));
@@ -583,7 +624,7 @@ public class ProjectControllerIT {
     public void exportProjectWithProcessExtensionsForUnknownConnectorParameterMapping() throws Exception {
         // GIVEN
         ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("invalid-project"));
-        Model processModel = modelService.importModel(project,
+        Model processModel = modelService.importSingleModel(project,
                                                       processModelType,
                                                       processFileContent("RankMovie",
                                                                          resourceAsByteArray("process/RankMovie.bpmn20.xml")));
@@ -614,7 +655,7 @@ public class ProjectControllerIT {
     public void exportProjectWithProcessExtensionsForUnknownInputProcessVariableMapping() throws Exception {
         // GIVEN
         ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("invalid-project"));
-        Model processModel = modelService.importModel(project,
+        Model processModel = modelService.importSingleModel(project,
                                                       processModelType,
                                                       processFileContent("RankMovie",
                                                                          resourceAsByteArray("process/RankMovie.bpmn20.xml")));
@@ -642,8 +683,8 @@ public class ProjectControllerIT {
     @Test
     public void exportProjectWithInvalidCallActivityReference() throws Exception {
         // GIVEN
-        ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("invalid-project"));
-        Model processModel = modelService.importModel(project,
+        ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("project-call-activiti"));
+        Model processModel = modelService.importSingleModel(project,
                                                       processModelType,
                                                       processFileContent("RankMovie",
                                                                          resourceAsByteArray("process/RankMovie.bpmn20.xml")));
@@ -654,7 +695,7 @@ public class ProjectControllerIT {
                                                    "movies",
                                                    resourceAsByteArray("connector/movies.json")));
 
-        Model mainProcessModel = modelService.importModel(project,
+        Model mainProcessModel = modelService.importSingleModel(project,
                                                           processModelType,
                                                           processFileContentWithCallActivity("main-process",
                                                                                              processModel,
@@ -677,8 +718,8 @@ public class ProjectControllerIT {
     @Test
     public void exportProjectWithValidCallActivity() throws Exception {
         // GIVEN
-        ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("invalid-project"));
-        Model processModel = modelService.importModel(project,
+        ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("project-with-call-activity"));
+        Model processModel = modelService.importSingleModel(project,
                                                       processModelType,
                                                       processFileContent("RankMovie",
                                                                          resourceAsByteArray("process/RankMovie.bpmn20.xml")));
@@ -689,7 +730,7 @@ public class ProjectControllerIT {
                                                    "movies",
                                                    resourceAsByteArray("connector/movies.json")));
 
-        modelService.importModel(project,
+        modelService.importSingleModel(project,
                                  processModelType,
                                  processFileContentWithCallActivity("main-process",
                                                                     processModel,
@@ -726,7 +767,7 @@ public class ProjectControllerIT {
     public void testImportProjectInvalidJsonFile() throws Exception {
         //GIVEN
         MockMultipartFile zipFile = new MockMultipartFile("file",
-                                                          "project-xy.zip",
+                                                          "project-xy-invalid.zip",
                                                           "project/zip",
                                                           resourceAsByteArray("project/project-xy-invalid.zip"));
 
@@ -738,7 +779,7 @@ public class ProjectControllerIT {
                 // THEN
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(status().reason(is("No valid project entry found to import: project-xy.zip")));
+                .andExpect(status().reason(is("No valid project entry found to import: project-xy-invalid.zip")));
     }
 
     @Test
