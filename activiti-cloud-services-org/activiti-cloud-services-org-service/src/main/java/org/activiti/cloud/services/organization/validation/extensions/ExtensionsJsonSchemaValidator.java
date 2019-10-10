@@ -17,24 +17,17 @@ package org.activiti.cloud.services.organization.validation.extensions;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelExtensionsValidator;
-import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ModelValidationError;
-import org.activiti.cloud.organization.api.ProcessModelType;
 import org.activiti.cloud.organization.api.ValidationContext;
 import org.activiti.cloud.organization.converter.JsonConverter;
 import org.activiti.cloud.organization.core.error.ModelingException;
 import org.activiti.cloud.organization.core.error.SemanticModelValidationException;
 import org.activiti.cloud.organization.core.error.SyntacticModelValidationException;
-import org.activiti.cloud.services.organization.validation.DNSNameValidator;
 import org.activiti.cloud.services.organization.validation.JsonSchemaModelValidator;
-import org.everit.json.schema.loader.SchemaLoader;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.stereotype.Component;
 
 /**
  * The generic JSON extensions schema for all the models
@@ -58,8 +51,8 @@ public abstract class ExtensionsJsonSchemaValidator extends JsonSchemaModelValid
 
     private void validateExtensionstInContext(byte[] bytes,
                                               ValidationContext validationContext) {
-        List<ModelValidationError> validationExceptions = validateModelExtensions(convertBytesToModel(bytes),
-                                                                                  validationContext).collect(Collectors.toList());
+        List<ModelValidationError> validationExceptions = getValidationErrors(convertBytesToModel(bytes),
+                                                                              validationContext);
         if (!validationExceptions.isEmpty()) {
             throw new SemanticModelValidationException("Semantic model validation errors encountered: "
                     + validationExceptions.stream().map(ModelValidationError::getDescription).collect(Collectors.joining(",")),
@@ -67,8 +60,8 @@ public abstract class ExtensionsJsonSchemaValidator extends JsonSchemaModelValid
         }
     }
 
-    protected abstract Stream<ModelValidationError> validateModelExtensions(Model model,
-                                                                            ValidationContext validationContext);
+    protected abstract List<ModelValidationError> getValidationErrors(Model model,
+                                                                      ValidationContext validationContext);
 
     protected Model convertBytesToModel(byte[] bytes) {
         try {

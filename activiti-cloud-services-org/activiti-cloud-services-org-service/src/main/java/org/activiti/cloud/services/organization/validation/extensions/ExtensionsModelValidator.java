@@ -7,7 +7,8 @@
 
 package org.activiti.cloud.services.organization.validation.extensions;
 
-import java.util.stream.Stream;
+import java.util.Collections;
+import java.util.List;
 
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelType;
@@ -41,10 +42,10 @@ public class ExtensionsModelValidator extends ExtensionsJsonSchemaValidator {
     }
 
     @Override
-    protected Stream<ModelValidationError> validateModelExtensions(Model model,
+    protected List<ModelValidationError> getValidationErrors(Model model,
                                                                    ValidationContext validationContext) {
         // No further validation needed
-        return Stream.empty();
+        return Collections.emptyList();
     }
 
 }

@@ -15,6 +15,9 @@
  */
 package org.activiti.cloud.services.organization.validation.extensions;
 
+import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.removeStart;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -23,7 +26,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.activiti.cloud.organization.api.Model;
-import org.activiti.cloud.organization.api.ModelExtensionsValidator;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ModelValidationError;
 import org.activiti.cloud.organization.api.ProcessModelType;
@@ -31,19 +33,13 @@ import org.activiti.cloud.organization.api.ValidationContext;
 import org.activiti.cloud.organization.api.process.Extensions;
 import org.activiti.cloud.organization.converter.JsonConverter;
 import org.activiti.cloud.organization.core.error.ModelingException;
-import org.activiti.cloud.organization.core.error.SemanticModelValidationException;
 import org.activiti.cloud.organization.core.error.SyntacticModelValidationException;
 import org.activiti.cloud.services.organization.converter.BpmnProcessModelContent;
 import org.activiti.cloud.services.organization.converter.ProcessModelContentConverter;
-import org.activiti.cloud.services.organization.validation.JsonSchemaModelValidator;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
-
-import static java.lang.String.format;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_TYPE_JSON;
-import static org.apache.commons.lang3.StringUtils.removeStart;
 
 @Component
 @ConditionalOnMissingBean(name = "ProcessExtensionsModelValidator")
@@ -76,7 +72,7 @@ public class ProcessExtensionsModelValidator extends ExtensionsJsonSchemaValidat
     }
 
     @Override
-    protected Stream<ModelValidationError> validateModelExtensions(Model model,
+    protected List<ModelValidationError> getValidationErrors(Model model,
                                                                    ValidationContext context) {
         return Optional.ofNullable(model.getId())
                 .map(modelId -> removeStart(modelId,
@@ -93,7 +89,8 @@ public class ProcessExtensionsModelValidator extends ExtensionsJsonSchemaValidat
                         format(UNKNOWN_PROCESS_ID_VALIDATION_ERROR_PROBLEM,
                                model.getId()),
                         format(UNKNOWN_PROCESS_ID_VALIDATION_ERROR_DESCRIPTION,
-                               model.getId()))));
+                               model.getId()))))
+                .collect(Collectors.toList());
     }
 
     protected Stream<ModelValidationError> validateBpmnModel(Model model,
