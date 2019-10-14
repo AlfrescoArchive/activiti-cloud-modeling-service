@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.activiti.cloud.acc.modeling.config;
+package org.activiti.cloud.organization.api.impl.config;
 
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.Module;
