@@ -102,7 +102,7 @@ public class GenericJsonModelTypeControllerIT {
                                                                                                                                         genericJsonModelType.getName())))
                 .post("/v1/projects/{projectId}/models",
                       project.getId())
-                .then().expect(status().isCreated()).body("name",
+                .then().expect(status().isCreated()).body("entry.name",
                                                           equalTo(GENERIC_MODEL_NAME));
     }
 
@@ -298,7 +298,7 @@ public class GenericJsonModelTypeControllerIT {
 
         given().accept(APPLICATION_JSON_VALUE).contentType(APPLICATION_JSON_VALUE).body(objectMapper.writeValueAsString(genericJsonModel)).post("/v1/projects/{projectId}/models",
                                                                                                                                                 project.getId())
-                .then().expect(status().isCreated()).body("extensions",
+                .then().expect(status().isCreated()).body("entry.extensions",
                                                           nullValue());
     }
 
@@ -314,7 +314,7 @@ public class GenericJsonModelTypeControllerIT {
 
         given().accept(APPLICATION_JSON_VALUE).contentType(APPLICATION_JSON_VALUE).body(objectMapper.writeValueAsString(genericJsonModel)).post("/v1/projects/{projectId}/models",
                                                                                                                                                 project.getId())
-                .then().expect(status().isCreated()).body("extensions",
+                .then().expect(status().isCreated()).body("entry.extensions",
                                                           notNullValue());
     }
 
@@ -341,15 +341,15 @@ public class GenericJsonModelTypeControllerIT {
 
         given().accept(APPLICATION_JSON_VALUE).contentType(APPLICATION_JSON_VALUE).body(objectMapper.writeValueAsString(genericJsonModel)).post("/v1/projects/{projectId}/models",
                                                                                                                                                 project.getId())
-                .then().expect(status().isCreated()).body("extensions",
+                .then().expect(status().isCreated()).body("entry.extensions",
                                                           notNullValue())
-                .body("extensions.string",
+                .body("entry.extensions.string",
                       equalTo("value"))
-                .body("extensions.number",
+                .body("entry.extensions.number",
                       equalTo(2f))
-                .body("extensions.array",
+                .body("entry.extensions.array",
                       org.hamcrest.Matchers.hasSize(3))
-                .body("extensions.list",
+                .body("entry.extensions.list",
                       org.hamcrest.Matchers.hasSize(4));
     }
 }

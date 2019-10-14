@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 /**
  * Service for managing {@link ModelExtensionsService}
  */
-@Service
 public class ModelExtensionsService {
 
     private final Map<String, List<ModelExtensionsValidator>> modelExtensionsValidatorsMapByModelType;

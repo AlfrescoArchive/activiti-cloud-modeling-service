@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 /**
  * Implementation of {@link ExtensionsJsonSchemaValidator} for validating the common extensions schema
  */
-@Component
 public class ExtensionsModelValidator extends ExtensionsJsonSchemaValidator {
 
     private final SchemaLoader modelExtensionsSchemaLoader;

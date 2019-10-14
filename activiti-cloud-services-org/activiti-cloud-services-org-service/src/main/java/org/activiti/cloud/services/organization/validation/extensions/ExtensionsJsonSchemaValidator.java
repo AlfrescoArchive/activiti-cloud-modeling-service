@@ -17,24 +17,17 @@ package org.activiti.cloud.services.organization.validation.extensions;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelExtensionsValidator;
-import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ModelValidationError;
-import org.activiti.cloud.organization.api.ProcessModelType;
 import org.activiti.cloud.organization.api.ValidationContext;
 import org.activiti.cloud.organization.converter.JsonConverter;
 import org.activiti.cloud.organization.core.error.ModelingException;
 import org.activiti.cloud.organization.core.error.SemanticModelValidationException;
 import org.activiti.cloud.organization.core.error.SyntacticModelValidationException;
-import org.activiti.cloud.services.organization.validation.DNSNameValidator;
 import org.activiti.cloud.services.organization.validation.JsonSchemaModelValidator;
-import org.everit.json.schema.loader.SchemaLoader;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.stereotype.Component;
 
 /**
  * The generic JSON extensions schema for all the models

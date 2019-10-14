@@ -8,12 +8,16 @@ import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelContent;
 import org.activiti.cloud.organization.api.ModelContentConverter;
 import org.activiti.cloud.organization.api.ModelContentValidator;
+import org.activiti.cloud.organization.api.ModelExtensionsValidator;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.Project;
 import org.activiti.cloud.organization.converter.JsonConverter;
 import org.activiti.cloud.organization.repository.ModelRepository;
 import org.activiti.cloud.organization.repository.ProjectRepository;
+import org.activiti.cloud.services.organization.validation.extensions.ExtensionsModelValidator;
 import org.activiti.cloud.services.organization.validation.project.ProjectValidator;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -27,6 +31,22 @@ public class OrgServiceAutoConfiguration {
         return new ModelContentService(modelValidators,
                                        modelConverters,
                                        contentUpdateListeners);
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public ExtensionsModelValidator extensionsModelValidator(SchemaLoader modelExtensionsSchemaLoader) {
+        return new ExtensionsModelValidator(modelExtensionsSchemaLoader);
+    }
+    
+    
+    @Bean
+    public ModelExtensionsService modelExtensionsService(Set<ModelExtensionsValidator> metadataValidators,
+                                                         ExtensionsModelValidator extensionsModelValidator,
+                                                         ModelTypeService modelTypeService) {
+        return new ModelExtensionsService(metadataValidators,
+                                          extensionsModelValidator,
+                                          modelTypeService);
     }
 
     @Bean

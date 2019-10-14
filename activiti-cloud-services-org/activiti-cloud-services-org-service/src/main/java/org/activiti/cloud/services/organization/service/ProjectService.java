@@ -161,7 +161,6 @@ public class ProjectService {
                                                            folderName);
             modelService.getModelExtensionsFileContent(model).ifPresent(extensionFileContent -> zipBuilder.appendFile(extensionFileContent,
                                                                                                                       folderName));
-            
         }));
         return zipBuilder.toZipFileContent();
     }
@@ -184,29 +183,9 @@ public class ProjectService {
                                 .ifPresent(fileContent -> {
                                     Optional<String> folderName = zipEntry.getFolderName(0);
                                     if (folderName.isPresent()) {
-                                        folderName.flatMap(modelTypeService::findModelTypeByFolderName).ifPresent(modelType -> {
-                                            if (fileContent.isJson()) {
-                                                String modelName = removeExtension(fileContent.getFilename(),
-                                                                                   JSON);
-                                                if (!modelName.endsWith(modelType.getExtensionsFileSuffix())) {
-                                                    projectHolder.addModelJsonFile(modelName,
-                                                                                   modelType,
-                                                                                   fileContent);
-                                                } else {
-                                                    //Add metadata to the projectHolder
-                                                    projectHolder.addModelExtension(StringUtils.removeEnd(modelName,
-                                                                                                    modelType.getExtensionsFileSuffix()),
-                                                                              modelType,
-                                                                              fileContent);
-                                                }
-                                            } else {
-                                                modelService.contentFilenameToModelName(zipEntry.getFileName(),
-                                                                                        modelType)
-                                                        .ifPresent(modelName -> projectHolder.addModelContent(modelName,
-                                                                                                              modelType,
-                                                                                                              fileContent));
-                                            }
-                                        });
+                                        folderName.flatMap(modelTypeService::findModelTypeByFolderName).ifPresent(modelType -> processZipEntryFile(projectHolder,
+                                                                                                                                                   fileContent,
+                                                                                                                                                   modelType));
                                     } else if (fileContent.isJson()) {
                                         jsonConverter.tryConvertToEntity(bytes).ifPresent(projectHolder::setProject);
                                     }
@@ -236,21 +215,36 @@ public class ProjectService {
         modelService.cleanModelIdList();
         return createdProject;
     }
-    
-    private void processZipEntryFile(ProjectHolder projectHolder, FileContent fileContent, ModelType modelType) {
+
+    private void processZipEntryFile(ProjectHolder projectHolder,
+                                     FileContent fileContent,
+                                     ModelType modelType) {
         String modelName = removeExtension(fileContent.getFilename(),
-                                           JSON);       
-        if(isProjectExtension(modelName, modelType, fileContent)){
-            modelName = StringUtils.removeEnd(modelName, modelType.getExtensionsFileSuffix());
-            projectHolder.addModelExtension(modelName, modelType, fileContent);
-        }else if(isProjectContent(modelName, modelType, fileContent)){
-             modelService.contentFilenameToModelName(modelName,modelType)
-                 .ifPresent(fixedModelName -> projectHolder.addModelContent(fixedModelName, modelType, fileContent));
-        }else {
-            if(modelName.endsWith(modelType.getExtensionsFileSuffix())) {
-                modelName = StringUtils.removeEnd(modelName, modelType.getExtensionsFileSuffix());
+                                           JSON);
+        if (isProjectExtension(modelName,
+                               modelType,
+                               fileContent)) {
+            modelName = StringUtils.removeEnd(modelName,
+                                              modelType.getExtensionsFileSuffix());
+            projectHolder.addModelExtension(modelName,
+                                            modelType,
+                                            fileContent);
+        } else if (isProjectContent(modelName,
+                                    modelType,
+                                    fileContent)) {
+            modelService.contentFilenameToModelName(modelName,
+                                                    modelType)
+                    .ifPresent(fixedModelName -> projectHolder.addModelContent(fixedModelName,
+                                                                               modelType,
+                                                                               fileContent));
+        } else {
+            if (modelName.endsWith(modelType.getExtensionsFileSuffix())) {
+                modelName = StringUtils.removeEnd(modelName,
+                                                  modelType.getExtensionsFileSuffix());
             }
-            projectHolder.addModelJsonFile(modelName, modelType, fileContent);
+            projectHolder.addModelJsonFile(modelName,
+                                           modelType,
+                                           fileContent);
         }
     }
 
@@ -293,9 +287,9 @@ public class ProjectService {
         }
 
         try {
-            modelService.getModelExtensionsFileContent(model).ifPresent(extensionsFileContent -> modelService.validateModelContent(model,
-                                                                                                                                   extensionsFileContent,
-                                                                                                                                   validationContext));
+            modelService.getModelExtensionsFileContent(model).ifPresent(extensionsFileContent -> modelService.validateModelExtensions(model,
+                                                                                                                                      extensionsFileContent,
+                                                                                                                                      validationContext));
         } catch (SemanticModelValidationException validationException) {
             validationErrors.addAll(validationException.getValidationErrors());
         }

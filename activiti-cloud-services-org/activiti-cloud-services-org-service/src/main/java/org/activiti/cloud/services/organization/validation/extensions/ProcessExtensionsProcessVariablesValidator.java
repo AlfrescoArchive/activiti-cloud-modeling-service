@@ -27,6 +27,7 @@ import org.activiti.cloud.organization.api.process.ProcessVariable;
 import org.activiti.cloud.organization.api.process.ProcessVariableMapping;
 import org.activiti.cloud.organization.api.process.ServiceTaskActionType;
 import org.activiti.cloud.services.organization.converter.BpmnProcessModelContent;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Optional;

@@ -16,7 +16,6 @@
 
 package org.activiti.cloud.services.organization.service;
 
-import org.activiti.cloud.organization.api.*;
 import static org.activiti.cloud.organization.api.ProcessModelType.PROCESS;
 import static org.activiti.cloud.organization.api.ValidationContext.EMPTY_CONTEXT;
 import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_TYPE_JSON;
@@ -39,6 +38,7 @@ import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 
 import org.activiti.cloud.organization.api.Model;
+import org.activiti.cloud.organization.api.ModelContent;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.Project;
 import org.activiti.cloud.organization.api.ValidationContext;
@@ -56,23 +56,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
-
-import javax.transaction.Transactional;
-import java.lang.reflect.InvocationTargetException;
-import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import static org.activiti.cloud.organization.api.ProcessModelType.PROCESS;
-import static org.activiti.cloud.organization.api.ValidationContext.EMPTY_CONTEXT;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.*;
-import static org.apache.commons.lang3.StringUtils.removeEnd;
 
 /**
  * Business logic related to {@link Model} entities including process models, form models, connectors, data models and decision table models.
@@ -164,28 +147,38 @@ public class ModelService {
         return modelRepository.findModelById(modelId);
     }
 
-    public void cleanModelIdList() {
-        this.modelIdentifiers.clear();
-    }
-    public Model newModelInstance(String type,
-                                  String name) {
-        Model model = newModelInstance();
-        model.setType(type);
-        model.setName(name);
-        return model;
+    public Optional<FileContent> getModelExtensionsFileContent(Model model) {
+        if (model.getExtensions() == null && isJsonContentType(model.getContentType())) {
+            return Optional.empty();
+        }
+
+        Model fullModel = findModelById(model.getId()).orElse(model);
+        byte[] modelContent = modelRepository.getModelContent(model);
+        final String bpmnModelId = modelContentService.findModelContentConverter(model.getType()).flatMap(converter -> converter.convertToModelContent(modelContent))
+                .map(ModelContent::getId).orElseGet(() -> modelContentService.getModelContentId(model));
+
+        Model modelToFile = buildModel(fullModel.getType(),
+                                       fullModel.getName());
+        modelToFile.setId(bpmnModelId);
+        modelToFile.setExtensions(fullModel.getExtensions());
+
+        FileContent extensionsFileContent = new FileContent(getExtensionsFilename(model),
+                                                            CONTENT_TYPE_JSON,
+                                                            jsonConverter.convertToJsonBytes(modelToFile));
+        return Optional.of(extensionsFileContent);
     }
 
-    public Model newModelInstance() {
-        try {
-            return (Model) modelRepository.getModelType().getConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
+    public void cleanModelIdList() {
+        this.modelIdentifiers.clear();
     }
 
     public Optional<FileContent> getModelDiagramFile(String modelId) {
         //TODO: to implement
         return Optional.empty();
+    }
+
+    public String getExtensionsFilename(Model model) {
+        return toJsonFilename(model.getName() + findModelType(model).getExtensionsFileSuffix());
     }
 
     public FileContent getModelContentFile(Model model) {
@@ -212,6 +205,7 @@ public class ModelService {
                 ? fileContent
                 : overrideModelContentId(modelToBeUpdate,
                                          fileContent);
+
         modelToBeUpdate.setContentType(fixedFileContent.getContentType());
         modelToBeUpdate.setContent(fixedFileContent.toString());
 
@@ -219,10 +213,9 @@ public class ModelService {
                 .flatMap(validator -> validator.convertToModelContent(fixedFileContent.getFileContent()))
                 .ifPresent(modelContent -> modelToBeUpdate.setTemplate(modelContent.getTemplate()));
 
-        emptyIfNull(modelContentService.findContentUploadListeners(modelToBeUpdate.getType()))
-                .stream()
-                .forEach(listener -> listener.execute(modelToBeUpdate,fixedFileContent));
-        
+        emptyIfNull(modelContentService.findContentUploadListeners(modelToBeUpdate.getType())).stream().forEach(listener -> listener.execute(modelToBeUpdate,
+                                                                                                                                             fixedFileContent));
+
         return modelRepository.updateModelContent(modelToBeUpdate,
                                                   fixedFileContent);
     }
@@ -342,11 +335,11 @@ public class ModelService {
                 ? EMPTY_CONTEXT
                 : Optional.ofNullable(model.getProject()).map(this::createValidationContext).orElseGet(() -> createValidationContext(model));
 
-            validateModelContent(model.getType(),
-                                 fileContent.getFileContent(),
-                                 validationContext);     
+        validateModelContent(model.getType(),
+                             fileContent.getFileContent(),
+                             validationContext);
     }
-    
+
     private ValidationContext createValidationContext(Project project) {
         return new ProjectValidationContext(getAllModels(project));
     }
@@ -366,40 +359,8 @@ public class ModelService {
     private void validateModelContent(String modelType,
                                       byte[] modelContent,
                                       ValidationContext validationContext) {
-        emptyIfNull(modelContentService.findModelValidators(modelType))
-        .stream()
-        .forEach(modelValidator -> modelValidator.validateModelContent(modelContent,
-                                                                       validationContext));
-    }
-
-    private ModelType findModelType(Model model) {
-        return Optional.ofNullable(model.getType()).flatMap(modelTypeService::findModelTypeByName)
-                .orElseThrow(() -> new UnknownModelTypeException("Unknown model type: " + model.getType()));
-    }
-
-    public Optional<FileContent> getModelExtensionsFileContent(Model model) {
-        if (isJsonContentType(model.getContentType())) {
-            return Optional.empty();
-        }
-
-        Model fullModel = findModelById(model.getId()).orElse(model);
-        byte[] modelContent = modelRepository.getModelContent(model);
-        final String bpmnModelId = modelContentService.findModelContentConverter(model.getType()).flatMap(converter -> converter.convertToModelContent(modelContent))
-                .map(ModelContent::getId).orElseGet(() -> modelContentService.getModelContentId(model));
-
-        Model modelToFile = newModelInstance(fullModel.getType(),
-                                             fullModel.getName());
-        modelToFile.setId(bpmnModelId);
-        modelToFile.setExtensions(fullModel.getExtensions());
-
-        FileContent extensionsFileContent = new FileContent(getExtensionsFilename(model),
-                                                          CONTENT_TYPE_JSON,
-                                                          jsonConverter.convertToJsonBytes(modelToFile));
-        return Optional.of(extensionsFileContent);
-    }
-
-    public String getExtensionsFilename(Model model) {
-        return toJsonFilename(model.getName() + findModelType(model).getExtensionsFileSuffix());
+        emptyIfNull(modelContentService.findModelValidators(modelType)).stream().forEach(modelValidator -> modelValidator.validateModelContent(modelContent,
+                                                                                                                                               validationContext));
     }
 
     public void validateModelExtensions(Model model,
@@ -430,9 +391,12 @@ public class ModelService {
     private void validateModelExtensions(String modelType,
                                          byte[] modelContent,
                                          ValidationContext validationContext) {
-        emptyIfNull(modelExtensionsService.findExtensionsValidators(modelType))
-        .stream()
-        .forEach(modelValidator -> modelValidator.validateModelExtensions(modelContent,
-                                                                          validationContext));
+        emptyIfNull(modelExtensionsService.findExtensionsValidators(modelType)).stream().forEach(modelValidator -> modelValidator.validateModelExtensions(modelContent,
+                                                                                                                                                          validationContext));
+    }
+
+    private ModelType findModelType(Model model) {
+        return Optional.ofNullable(model.getType()).flatMap(modelTypeService::findModelTypeByName)
+                .orElseThrow(() -> new UnknownModelTypeException("Unknown model type: " + model.getType()));
     }
 }
