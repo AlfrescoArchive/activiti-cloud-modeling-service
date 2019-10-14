@@ -58,8 +58,8 @@ public abstract class ExtensionsJsonSchemaValidator extends JsonSchemaModelValid
 
     private void validateExtensionstInContext(byte[] bytes,
                                               ValidationContext validationContext) {
-        List<ModelValidationError> validationExceptions = validateModelExtensions(convertBytesToModel(bytes),
-                                                                                  validationContext).collect(Collectors.toList());
+        List<ModelValidationError> validationExceptions = getValidationErrors(convertBytesToModel(bytes),
+                                                                              validationContext);
         if (!validationExceptions.isEmpty()) {
             throw new SemanticModelValidationException("Semantic model validation errors encountered: "
                     + validationExceptions.stream().map(ModelValidationError::getDescription).collect(Collectors.joining(",")),
@@ -67,8 +67,8 @@ public abstract class ExtensionsJsonSchemaValidator extends JsonSchemaModelValid
         }
     }
 
-    protected abstract Stream<ModelValidationError> validateModelExtensions(Model model,
-                                                                            ValidationContext validationContext);
+    protected abstract List<ModelValidationError> getValidationErrors(Model model,
+                                                                      ValidationContext validationContext);
 
     protected Model convertBytesToModel(byte[] bytes) {
         try {

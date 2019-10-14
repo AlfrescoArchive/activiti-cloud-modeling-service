@@ -76,7 +76,7 @@ public class ProcessExtensionsModelValidator extends ExtensionsJsonSchemaValidat
     }
 
     @Override
-    protected Stream<ModelValidationError> validateModelExtensions(Model model,
+    protected List<ModelValidationError> getValidationErrors(Model model,
                                                                    ValidationContext context) {
         return Optional.ofNullable(model.getId())
                 .map(modelId -> removeStart(modelId,
@@ -93,7 +93,8 @@ public class ProcessExtensionsModelValidator extends ExtensionsJsonSchemaValidat
                         format(UNKNOWN_PROCESS_ID_VALIDATION_ERROR_PROBLEM,
                                model.getId()),
                         format(UNKNOWN_PROCESS_ID_VALIDATION_ERROR_DESCRIPTION,
-                               model.getId()))));
+                               model.getId()))))
+                .collect(Collectors.toList());
     }
 
     protected Stream<ModelValidationError> validateBpmnModel(Model model,
