@@ -270,10 +270,12 @@ public class ModelService {
             model = createModelFromContent(modelType,
                                            fileContent);
         }
-        String convertedId = model.getId() != null
-                ? model.getId()
-                : retrieveModelIdFromModelContent(model,
-                                                  fileContent);
+        String convertedId = model.getId();
+        
+        if (model.getId() == null && (modelTypeService.isJson(modelType) == ContentTypeUtils.isJsonContentType(fileContent.getContentType()))) {
+            convertedId = retrieveModelIdFromModelContent(model,
+                                            fileContent);
+        }
         createModel(project,
                     model);
         if (convertedId != null) {

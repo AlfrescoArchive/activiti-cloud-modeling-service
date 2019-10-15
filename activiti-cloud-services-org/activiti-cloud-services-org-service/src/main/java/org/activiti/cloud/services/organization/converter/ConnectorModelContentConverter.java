@@ -69,7 +69,7 @@ public class ConnectorModelContentConverter implements ModelContentConverter<Con
                                      String modelContentId) {
     try {
       ObjectNode jsonNode = (ObjectNode) objectMapper.readTree(fileContent.getFileContent());
-      String actualId = modelIdentifiers.get(jsonNode.get("id").asText());
+      String actualId = jsonNode.get("id")!=null ? modelIdentifiers.get(jsonNode.get("id").asText()) : null;
       if(actualId != null) {
         jsonNode.put("id", actualId);
       }
