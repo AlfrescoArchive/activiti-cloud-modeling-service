@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Alfresco, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.activiti.cloud.services.organization.rest.controller;
 
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
@@ -98,17 +114,15 @@ public class GenericJsonModelTypeValidationControllerIT {
     }
 
     @Test
-    public void testValidateModelContent() throws IOException {
+    public void sholud_callGenericJsonContentValidatorAndNotCallGenericJsonExtensionsValidator_when_validatingModelContentJsonContentType() throws IOException {
         byte[] fileContent = resourceAsByteArray("generic/model-simple.json");
 
         given().multiPart("file",
                           "simple-model.json",
                           fileContent,
                           "application/json")
-                //WHEN
                 .post("/v1/models/{modelId}/validate",
                       genericJsonModel.getId())
-                //THEN
                 .then().expect(status().isNoContent()).body(isEmptyString());
 
         Mockito.verify(genericJsonExtensionsValidator,
@@ -123,17 +137,15 @@ public class GenericJsonModelTypeValidationControllerIT {
     }
 
     @Test
-    public void testValidateModelContentTextContentType() throws IOException {
+    public void sholud_callGenericJsonContentValidatorAndNotCallGenericJsonExtensionsValidator_when_validatingModelContentTextContentType() throws IOException {
         byte[] fileContent = resourceAsByteArray("generic/model-simple.json");
 
         given().multiPart("file",
                           "simple-model.json",
                           fileContent,
                           "text/plain")
-                //WHEN
                 .post("/v1/models/{modelId}/validate",
                       genericJsonModel.getId())
-                //THEN
                 .then().expect(status().isNoContent()).body(isEmptyString());
 
         Mockito.verify(genericJsonExtensionsValidator,
@@ -148,8 +160,7 @@ public class GenericJsonModelTypeValidationControllerIT {
     }
 
     @Test
-    public void testValidateInvalidModelContent() throws IOException {
-        //GIVEN
+    public void sholud_throwExceptionAndCallGenericJsonContentValidatorAndNotCallGenericJsonExtensionsValidator_when_validatingInvalidModelContent() throws IOException {
         this.validateInvalidContent();
 
         byte[] fileContent = resourceAsByteArray("generic/model-simple.json");
@@ -158,10 +169,8 @@ public class GenericJsonModelTypeValidationControllerIT {
                                              "invalid-simple-model.json",
                                              fileContent,
                                              "application/json")
-                //WHEN
                 .post("/v1/models/{modelId}/validate",
                       genericJsonModel.getId())
-                //THEN
                 .then().log().all().expect(status().isBadRequest())).isSemanticValidationException().hasValidationErrors("Content invalid");
 
         Mockito.verify(genericJsonExtensionsValidator,
@@ -176,17 +185,15 @@ public class GenericJsonModelTypeValidationControllerIT {
     }
 
     @Test
-    public void testValidateModelValidExtensions() throws IOException {
+    public void sholud_notCallGenericJsonContentValidatorAndCallGenericJsonExtensionsValidator_when_validatingModelValidExtensions() throws IOException {
         byte[] fileContent = resourceAsByteArray("generic/model-simple-valid-extensions.json");
 
         given().multiPart("file",
                           "simple-model-extensions.json",
                           fileContent,
                           "application/json")
-                //WHEN
                 .post("/v1/models/{modelId}/validate/extensions",
                       genericJsonModel.getId())
-                //THEN
                 .then().expect(status().isNoContent()).body(isEmptyString());
 
         Mockito.verify(genericJsonContentValidator,
@@ -201,17 +208,15 @@ public class GenericJsonModelTypeValidationControllerIT {
     }
 
     @Test
-    public void testValidateModelInvalidExtensions() throws IOException {
+    public void sholud_throwSemanticValidationException_when_validatingModelInvalidExtensions() throws IOException {
         byte[] fileContent = resourceAsByteArray("generic/model-simple-invalid-extensions.json");
 
         assertThatResponse(given().multiPart("file",
                                              "simple-model-extensions.json",
                                              fileContent,
                                              "application/json")
-                //WHEN
                 .post("/v1/models/{modelId}/validate/extensions",
                       genericJsonModel.getId())
-                //THEN
                 .then().log().all().expect(status().isBadRequest())).isSemanticValidationException().hasValidationErrors("required key [id] not found");
 
         Mockito.verify(genericJsonContentValidator,
@@ -226,17 +231,15 @@ public class GenericJsonModelTypeValidationControllerIT {
     }
 
     @Test
-    public void testValidateModelInvalidJsonExtensions() throws IOException {
+    public void sholud_throwSyntacticValidationException_when_validatingInvalidJsonExtensions() throws IOException {
         byte[] fileContent = resourceAsByteArray("generic/model-simple-invalid-json-extensions.json");
 
         assertThatResponse(given().multiPart("file",
                                              "simple-model-extensions.json",
                                              fileContent,
                                              "application/json")
-                //WHEN
                 .post("/v1/models/{modelId}/validate/extensions",
                       genericJsonModel.getId())
-                //THEN
                 .then().log().all().expect(status().isBadRequest())).isSyntacticValidationException()
                         .hasValidationErrors("org.json.JSONException: A JSONObject text must begin with '{' at 1 [character 2 line 1]");
 
@@ -252,17 +255,15 @@ public class GenericJsonModelTypeValidationControllerIT {
     }
 
     @Test
-    public void testValidateModelInvalidTypeExtensions() throws IOException {
+    public void sholud_throwSemanticValidationException_when_validatingModelInvalidTypeExtensions() throws IOException {
         byte[] fileContent = resourceAsByteArray("generic/model-simple-invalid-type-extensions.json");
 
         assertThatResponse(given().multiPart("file",
                                              "simple-model-extensions.json",
                                              fileContent,
                                              "application/json")
-                //WHEN
                 .post("/v1/models/{modelId}/validate/extensions",
                       genericJsonModel.getId())
-                //THEN
                 .then().log().all().expect(status().isBadRequest())).isSemanticValidationException().hasValidationErrors("expected type: String, found: Boolean");
 
         Mockito.verify(genericJsonContentValidator,
@@ -277,7 +278,7 @@ public class GenericJsonModelTypeValidationControllerIT {
     }
 
     @Test
-    public void testValidateModelInvalidSemanticExtensions() throws IOException {
+    public void sholud_throwException_when_validatingModelInvalidSemanticExtensions() throws IOException {
         this.validateInvalidExtensions();
 
         byte[] fileContent = resourceAsByteArray("generic/model-simple-valid-extensions.json");
@@ -286,10 +287,8 @@ public class GenericJsonModelTypeValidationControllerIT {
                                              "simple-model-extensions.json",
                                              fileContent,
                                              "application/json")
-                //WHEN
                 .post("/v1/models/{modelId}/validate/extensions",
                       genericJsonModel.getId())
-                //THEN
                 .then().log().all().expect(status().isBadRequest())).isSemanticValidationException().hasValidationErrors("Extensions invalid");
 
         Mockito.verify(genericJsonContentValidator,

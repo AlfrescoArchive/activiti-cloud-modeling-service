@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Alfresco, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.activiti.cloud.services.organization.rest.controller;
 
 import static org.activiti.cloud.services.organization.mock.MockMultipartRequestBuilder.putMultipart;
@@ -66,14 +82,12 @@ public class GenericJsonModelTypeContentUpdateListenerControllerIT {
     }
 
     @Test
-    public void testUpdateContentGenericJsonModelCallsContentUpdateListenerForTheModel() throws Exception {
-        // GIVEN
+    public void should_callJsonContentUpdateListener_when_updatingModelContent() throws Exception {
         Model genericJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
                                                                              genericJsonModelType.getName()));
 
         String stringModel = objectMapper.writeValueAsString(genericJsonModel);
 
-        // WHEN
         mockMvc.perform(putMultipart("{version}/models/{modelId}/content",
                                      API_VERSION,
                                      genericJsonModel.getId()).file("file",
@@ -82,7 +96,6 @@ public class GenericJsonModelTypeContentUpdateListenerControllerIT {
                                                                     stringModel.getBytes()))
                 .andExpect(status().isNoContent());
 
-        // THEN
         Mockito.verify(genericJsonContentUpdateListener,
                        Mockito.times(1))
                 .execute(Mockito.argThat(model -> model.getId().equals(genericJsonModel.getId())),
@@ -90,15 +103,12 @@ public class GenericJsonModelTypeContentUpdateListenerControllerIT {
     }
 
     @Test
-    public void testUpdateContentGenericJsonModelNotCallsContentUpdateListenerForOtherModel() throws Exception {
-
-        // GIVEN
+    public void should_notCallNonJsonContentUpdateListener_when_updatingModelContent() throws Exception {
         Model genericJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
                                                                              genericJsonModelType.getName()));
 
         String stringModel = objectMapper.writeValueAsString(genericJsonModel);
 
-        // WHEN
         mockMvc.perform(putMultipart("{version}/models/{modelId}/content",
                                      API_VERSION,
                                      genericJsonModel.getId()).file("file",
@@ -107,7 +117,6 @@ public class GenericJsonModelTypeContentUpdateListenerControllerIT {
                                                                     stringModel.getBytes()))
                 .andExpect(status().isNoContent());
 
-        // THEN
         Mockito.verify(genericNonJsonContentUpdateListener,
                        Mockito.times(0))
                 .execute(Mockito.any(),

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Alfresco, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.activiti.cloud.services.organization.rest.controller;
 
 import static org.activiti.cloud.services.common.util.FileUtils.resourceAsByteArray;
@@ -67,12 +83,10 @@ public class GenericNonJsonModelTypeContentUpdateListenerControllerIT {
     }
 
     @Test
-    public void testUpdateContentGenericNonJsonModelCallsContentUpdateListenerForTheModel() throws Exception {
-        // GIVEN
+    public void should_notCallJsonContentUpdateListener_when_updatingModelContent() throws Exception {
         Model genericNonJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
                                                                                 genericNonJsonModelType.getName()));
 
-        // WHEN
         mockMvc.perform(putMultipart("{version}/models/{modelId}/content",
                                      API_VERSION,
                                      genericNonJsonModel.getId()).file("file",
@@ -81,7 +95,6 @@ public class GenericNonJsonModelTypeContentUpdateListenerControllerIT {
                                                                        resourceAsByteArray("generic/model-simple.bin")))
                 .andExpect(status().isNoContent());
 
-        // THEN
         Mockito.verify(genericJsonContentUpdateListener,
                        Mockito.times(0))
                 .execute(Mockito.any(),
@@ -90,15 +103,13 @@ public class GenericNonJsonModelTypeContentUpdateListenerControllerIT {
     }
 
     @Test
-    public void testUpdateContentGenericNonJsonModelNotCallsContentUpdateListenerForOtherModel() throws Exception {
+    public void should_callNonJsonContentUpdateListener_when_updatingModelContent() throws Exception {
 
-        // GIVEN
         Model genericNonJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
                                                                                 genericNonJsonModelType.getName()));
         
         byte[] fileContent = resourceAsByteArray("generic/model-simple.bin");
 
-        // WHEN
         mockMvc.perform(putMultipart("{version}/models/{modelId}/content",
                                      API_VERSION,
                                      genericNonJsonModel.getId()).file("file",
@@ -107,7 +118,6 @@ public class GenericNonJsonModelTypeContentUpdateListenerControllerIT {
                                                                        fileContent))
                 .andExpect(status().isNoContent());
 
-        // THEN
         Mockito.verify(genericNonJsonContentUpdateListener,
                        Mockito.times(1))
                 .execute(Mockito.argThat(model -> model.getId().equals(genericNonJsonModel.getId())),

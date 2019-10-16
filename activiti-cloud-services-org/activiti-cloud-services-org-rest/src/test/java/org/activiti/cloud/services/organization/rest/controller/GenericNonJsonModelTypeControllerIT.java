@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Alfresco, Inc. and/or its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.activiti.cloud.services.organization.rest.controller;
 
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
@@ -70,7 +86,7 @@ public class GenericNonJsonModelTypeControllerIT {
     }
 
     @Test
-    public void testCreateGenericNonJsonModel() throws Exception {
+    public void should_returnStatusCreatedAndModelName_when_creatingGenericNonJsonModel() throws Exception {
         String name = GENERIC_MODEL_NAME;
 
         Project project = projectRepository.createProject(project(GENERIC_PROJECT_NAME));
@@ -84,7 +100,7 @@ public class GenericNonJsonModelTypeControllerIT {
     }
 
     @Test
-    public void testCreateGenericNonJsonModelInvalidPayloadNameNull() throws Exception {
+    public void should_throwRequiredFieldException_when_creatingGenericNonJsonModelWithNameNull() throws Exception {
         String name = null;
 
         Project project = projectRepository.createProject(project(GENERIC_PROJECT_NAME));
@@ -92,15 +108,13 @@ public class GenericNonJsonModelTypeControllerIT {
         assertThatResponse(given().accept(APPLICATION_JSON_VALUE).contentType(APPLICATION_JSON_VALUE).body(objectMapper.writeValueAsString(new ModelEntity(name,
                                                                                                                                                            genericNonJsonModelType
                                                                                                                                                                    .getName())))
-                // WHEN
                 .post("/v1/projects/{projectId}/models",
                       project.getId())
-                // THEN
                 .then().expect(status().isBadRequest())).isValidationException().hasValidationErrorCodes("field.required").hasValidationErrorMessages("The model name is required");
     }
 
     @Test
-    public void testCreateGenericNonJsonModelInvalidPayloadNameEmpty() throws Exception {
+    public void should_throwEmptyNameException_when_creatingGenericNonJsonModelWithNameEmpty() throws Exception {
         String name = "";
 
         Project project = projectRepository.createProject(project(GENERIC_PROJECT_NAME));
@@ -108,10 +122,8 @@ public class GenericNonJsonModelTypeControllerIT {
         assertThatResponse(given().accept(APPLICATION_JSON_VALUE).contentType(APPLICATION_JSON_VALUE).body(objectMapper.writeValueAsString(new ModelEntity(name,
                                                                                                                                                            genericNonJsonModelType
                                                                                                                                                                    .getName())))
-                // WHEN
                 .post("/v1/projects/{projectId}/models",
                       project.getId())
-                // THEN
                 .then().expect(status().isBadRequest())).isValidationException().hasValidationErrorCodes("field.empty",
                                                                                                          "regex.mismatch")
                         .hasValidationErrorMessages("The model name cannot be empty",
@@ -119,7 +131,7 @@ public class GenericNonJsonModelTypeControllerIT {
     }
 
     @Test
-    public void testCreateGenericNonJsonModelInvalidPayloadNameTooLong() throws Exception {
+    public void should_throwTooLongNameException_when_creatingGenericNonJsonModelWithNameTooLong() throws Exception {
         String name = "123456789_123456789_1234567";
 
         Project project = projectRepository.createProject(project(GENERIC_PROJECT_NAME));
@@ -127,10 +139,8 @@ public class GenericNonJsonModelTypeControllerIT {
         assertThatResponse(given().accept(APPLICATION_JSON_VALUE).contentType(APPLICATION_JSON_VALUE).body(objectMapper.writeValueAsString(new ModelEntity(name,
                                                                                                                                                            genericNonJsonModelType
                                                                                                                                                                    .getName())))
-                // WHEN
                 .post("/v1/projects/{projectId}/models",
                       project.getId())
-                // THEN
                 .then().expect(status().isBadRequest())).isValidationException().hasValidationErrorCodes("length.greater",
                                                                                                          "regex.mismatch")
                         .hasValidationErrorMessages("The model name length cannot be greater than 26: '123456789_123456789_1234567'",
@@ -138,7 +148,7 @@ public class GenericNonJsonModelTypeControllerIT {
     }
 
     @Test
-    public void testCreateGenericNonJsonModelInvalidPayloadNameWithUnderscore() throws Exception {
+    public void should_throwBadNameException_when_creatingGenericNonJsonModelWithNameWithUnderscore() throws Exception {
         String name = "name_with_underscore";
 
         Project project = projectRepository.createProject(project(GENERIC_PROJECT_NAME));
@@ -146,16 +156,14 @@ public class GenericNonJsonModelTypeControllerIT {
         assertThatResponse(given().accept(APPLICATION_JSON_VALUE).contentType(APPLICATION_JSON_VALUE).body(objectMapper.writeValueAsString(new ModelEntity(name,
                                                                                                                                                            genericNonJsonModelType
                                                                                                                                                                    .getName())))
-                // WHEN
                 .post("/v1/projects/{projectId}/models",
                       project.getId())
-                // THEN
                 .then().expect(status().isBadRequest())).isValidationException().hasValidationErrorCodes("regex.mismatch")
                         .hasValidationErrorMessages("The model name should follow DNS-1035 conventions: it must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character: 'name_with_underscore'");
     }
 
     @Test
-    public void testCreateGenericNonJsonModelInvalidPayloadNameWithUppercase() throws Exception {
+    public void should_throwBadNameException_when_creatingGenericNonJsonModelWithNameWithUppercase() throws Exception {
         String name = "NameWithUppercase";
 
         Project project = projectRepository.createProject(project(GENERIC_PROJECT_NAME));
@@ -163,16 +171,14 @@ public class GenericNonJsonModelTypeControllerIT {
         assertThatResponse(given().accept(APPLICATION_JSON_VALUE).contentType(APPLICATION_JSON_VALUE).body(objectMapper.writeValueAsString(new ModelEntity(name,
                                                                                                                                                            genericNonJsonModelType
                                                                                                                                                                    .getName())))
-                // WHEN
                 .post("/v1/projects/{projectId}/models",
                       project.getId())
-                // THEN
                 .then().expect(status().isBadRequest())).isValidationException().hasValidationErrorCodes("regex.mismatch")
                         .hasValidationErrorMessages("The model name should follow DNS-1035 conventions: it must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character: 'NameWithUppercase'");
     }
 
     @Test
-    public void testUpdateGenericNonJsonModel() throws Exception {
+    public void should_returnStatusOKAndModelName_when_updatingGenericNonJsonModel() throws Exception {
         String name = "updated-connector-name";
 
         Model genericNonJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
@@ -187,7 +193,7 @@ public class GenericNonJsonModelTypeControllerIT {
     }
 
     @Test
-    public void testUpdateGenericNonJsonModelInvalidPayloadNameNull() throws Exception {
+    public void should_returnStatusOKAndModelName_when_updatingGenericNonJsonModelWithNameNull() throws Exception {
         String name = null;
 
         Model genericNonJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
@@ -202,7 +208,7 @@ public class GenericNonJsonModelTypeControllerIT {
     }
 
     @Test
-    public void testUpdateGenericNonJsonModelInvalidPayloadNameEmpty() throws Exception {
+    public void should_throwBadNameException_when_updatingGenericNonJsonModelWithNameEmpty() throws Exception {
         String name = "";
 
         Model genericNonJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
@@ -219,7 +225,7 @@ public class GenericNonJsonModelTypeControllerIT {
     }
 
     @Test
-    public void testUpdateGenericNonJsonModelInvalidPayloadNameTooLong() throws Exception {
+    public void should_throwBadNameException_when_updatingGenericNonJsonModelWithNameTooLong() throws Exception {
         String name = "123456789_123456789_1234567";
 
         Model genericNonJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
@@ -234,7 +240,7 @@ public class GenericNonJsonModelTypeControllerIT {
     }
 
     @Test
-    public void testUpdateGenericNonJsonModelInvalidPayloadNameWithUnderscore() throws Exception {
+    public void should_throwBadNameException_when_updatingGenericNonJsonModelWithNameWithUnderscore() throws Exception {
         String name = "name_with_underscore";
 
         Model genericNonJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
@@ -249,7 +255,7 @@ public class GenericNonJsonModelTypeControllerIT {
     }
 
     @Test
-    public void testUpdateGenericNonJsonModelInvalidPayloadNameWithUppercase() throws Exception {
+    public void should_throwBadNameException_when_updatingGenericNonJsonModelWithNameWithUppercase() throws Exception {
         String name = "NameWithUppercase";
 
         Model genericNonJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
@@ -264,7 +270,7 @@ public class GenericNonJsonModelTypeControllerIT {
     }
 
     @Test
-    public void testCreateGenericNonJsonModelWithNullExtensions() throws Exception {
+    public void should_returnStatusCreatedAndNullExtensions_when_creatingGenericNonJsonModelWithNullExtensions() throws Exception {
         Project project = projectRepository.createProject(project(GENERIC_PROJECT_NAME));
 
         Model genericNonJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
@@ -280,7 +286,7 @@ public class GenericNonJsonModelTypeControllerIT {
     }
 
     @Test
-    public void testCreateGenericNonJsonModelWithEmptyExtensions() throws Exception {
+    public void should_returnStatusCreatedAndNotNullExtensions_when_creatingGenericNonJsonModelWithEmptyExtensions() throws Exception {
         Project project = projectRepository.createProject(project(GENERIC_PROJECT_NAME));
 
         Model genericNonJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
@@ -296,7 +302,7 @@ public class GenericNonJsonModelTypeControllerIT {
     }
 
     @Test
-    public void testCreateGenericNonJsonModelWithValidExtensions() throws Exception {
+    public void should_returnStatusCreatedAndExtensions_when_creatingGenericNonJsonModelWithValidExtensions() throws Exception {
         Project project = projectRepository.createProject(project(GENERIC_PROJECT_NAME));
 
         Model genericNonJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
