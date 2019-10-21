@@ -221,7 +221,7 @@ public interface ModelRestApi {
     @ApiOperation(
             tags = MODELS,
             value = "Validate a model content",
-            notes = "Allows to the model content without save it.")
+            notes = "Allows to validate the model content without save it.")
     @PostMapping("/models/{modelId}/validate")
     @ResponseStatus(NO_CONTENT)
     void validateModel(
@@ -233,7 +233,7 @@ public interface ModelRestApi {
     @ApiOperation(
             tags = MODELS,
             value = "Validate model extensions",
-            notes = "Allows to the model extensions without save them.")
+            notes = "Allows to validate the model extensions without save them.")
     @PostMapping("/models/{modelId}/validate/extensions")
     @ResponseStatus(NO_CONTENT)
     void validateModelExtensions(
