@@ -179,7 +179,9 @@ public class ProjectService {
       folderName.flatMap(modelTypeService::findModelTypeByFolderName)
         .ifPresent(modelType -> processZipEntryFile(projectHolder, fileContent, modelType));
     } else if (fileContent.isJson()) {
-      jsonConverter.tryConvertToEntity(zipEntry.getContent().get()).ifPresent(projectHolder::setProject);
+      zipEntry.getContent().ifPresent(
+        bytes -> jsonConverter.tryConvertToEntity(bytes).ifPresent(projectHolder::setProject)
+      );
     }
   }
 

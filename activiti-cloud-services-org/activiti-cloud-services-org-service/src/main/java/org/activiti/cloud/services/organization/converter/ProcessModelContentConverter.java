@@ -95,8 +95,7 @@ public class ProcessModelContentConverter implements ModelContentConverter<BpmnP
 
   @Override
   public FileContent overrideModelId(FileContent fileContent,
-                                     HashMap<String, String> modelIdentifiers,
-                                     String modelContentId) {
+                                     HashMap<String, String> modelIdentifiers) {
     Optional<BpmnProcessModelContent> modelContent = this.convertToModelContent(fileContent.getFileContent());
     this.fixProcessModel(modelContent.get(), modelIdentifiers);
     return new FileContent(fileContent.getFilename(), fileContent.getContentType(),
