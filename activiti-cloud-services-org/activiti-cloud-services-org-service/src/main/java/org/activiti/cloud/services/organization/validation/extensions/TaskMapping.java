@@ -18,6 +18,7 @@ package org.activiti.cloud.services.organization.validation.extensions;
 
 import java.util.Map;
 
+import org.activiti.bpmn.model.BaseElement;
 import org.activiti.bpmn.model.FlowNode;
 import org.activiti.cloud.organization.api.process.ProcessVariableMapping;
 import org.activiti.cloud.organization.api.process.ServiceTaskActionType;
@@ -29,14 +30,14 @@ public class TaskMapping {
 
     private String processId;
 
-    private FlowNode task;
+    private BaseElement task;
 
     private ServiceTaskActionType action;
 
     private Map<String, ProcessVariableMapping> processVariableMappings;
 
     public TaskMapping(String processId,
-                       FlowNode task,
+                       BaseElement task,
                        ServiceTaskActionType action,
                        Map<String, ProcessVariableMapping> processVariableMappings) {
         this.processId = processId;
@@ -49,7 +50,7 @@ public class TaskMapping {
         return processId;
     }
 
-    public FlowNode getTask() {
+    public BaseElement getTask() {
         return task;
     }
 

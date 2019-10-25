@@ -18,6 +18,7 @@ package org.activiti.cloud.services.organization.validation.extensions;
 
 import static java.lang.String.format;
 
+import org.activiti.bpmn.model.BaseElement;
 import org.activiti.bpmn.model.FlowNode;
 import org.activiti.cloud.organization.api.ModelValidationError;
 import org.activiti.cloud.organization.api.ValidationContext;
@@ -52,7 +53,7 @@ public class ProcessExtensionsTaskMappingsValidator implements ProcessExtensions
     public Stream<ModelValidationError> validateExtensions(Extensions extensions,
                                                  BpmnProcessModelContent bpmnModel,
                                                  ValidationContext validationContext) {
-        Set<FlowNode> availableTasks = bpmnModel.findAllNodes();
+        Set<BaseElement> availableTasks = bpmnModel.findAllNodes();
         return extensions.getVariablesMappings().entrySet()
                 .stream()
                 .flatMap(taskMapping -> validateTaskMapping(bpmnModel.getId(),
@@ -65,7 +66,7 @@ public class ProcessExtensionsTaskMappingsValidator implements ProcessExtensions
     private Stream<ModelValidationError> validateTaskMapping(String processId,
                                                              String taskId,
                                                              Map<ServiceTaskActionType, Map<String, ProcessVariableMapping>> extensionMapping,
-                                                             Set<FlowNode> availableTasks,
+                                                             Set<BaseElement> availableTasks,
                                                              ValidationContext context) {
         return availableTasks
                 .stream()
@@ -86,7 +87,7 @@ public class ProcessExtensionsTaskMappingsValidator implements ProcessExtensions
 
     private Stream<ModelValidationError> validateTaskMappings(
             String processId,
-            FlowNode task,
+            BaseElement task,
             Map<ServiceTaskActionType, Map<String, ProcessVariableMapping>> taskMappingsMap,
             ValidationContext validationContext) {
 
@@ -100,7 +101,7 @@ public class ProcessExtensionsTaskMappingsValidator implements ProcessExtensions
     }
 
     private List<TaskMapping> toTaskMappings(String processId,
-                                              FlowNode task,
+                                             BaseElement task,
                                               Map<ServiceTaskActionType, Map<String, ProcessVariableMapping>> taskMappingsMap) {
         return taskMappingsMap.entrySet()
                 .stream()

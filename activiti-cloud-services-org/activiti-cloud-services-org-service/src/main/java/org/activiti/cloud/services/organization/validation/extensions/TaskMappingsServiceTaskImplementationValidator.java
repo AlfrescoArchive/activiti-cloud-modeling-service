@@ -20,6 +20,7 @@ import static java.lang.String.format;
 import static org.activiti.cloud.organization.api.process.ServiceTaskActionType.INPUTS;
 import static org.springframework.util.StringUtils.isEmpty;
 
+import org.activiti.bpmn.model.BaseElement;
 import org.activiti.bpmn.model.FlowNode;
 import org.activiti.bpmn.model.ServiceTask;
 import org.activiti.cloud.organization.api.ConnectorModelType;
@@ -86,7 +87,7 @@ public class TaskMappingsServiceTaskImplementationValidator implements TaskMappi
     }
 
     private Optional<ModelValidationError> validateTaskMappings(String processId,
-                                                                FlowNode task,
+                                                                BaseElement task,
                                                                 ServiceTaskActionType actionType,
                                                                 String processVariableMappingKey,
                                                                 ProcessVariableMapping processVariableMapping,
@@ -113,7 +114,7 @@ public class TaskMappingsServiceTaskImplementationValidator implements TaskMappi
                                        connectorParameterName)))));
     }
 
-    private Optional<String> getTaskImplementation(FlowNode task) {
+    private Optional<String> getTaskImplementation(BaseElement task) {
         return Optional.ofNullable(task)
                 .filter(t -> ServiceTask.class.isAssignableFrom(t.getClass()))
                 .map(ServiceTask.class::cast)
