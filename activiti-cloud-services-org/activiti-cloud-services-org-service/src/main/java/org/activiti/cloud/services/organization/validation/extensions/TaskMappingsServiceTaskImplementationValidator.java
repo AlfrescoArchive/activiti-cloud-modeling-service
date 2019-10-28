@@ -18,6 +18,7 @@ package org.activiti.cloud.services.organization.validation.extensions;
 
 import static java.lang.String.format;
 import static org.activiti.cloud.organization.api.process.ServiceTaskActionType.INPUTS;
+import static org.activiti.cloud.organization.api.process.ServiceTaskActionType.OUTPUTS;
 import static org.springframework.util.StringUtils.isEmpty;
 
 import org.activiti.bpmn.model.FlowNode;
@@ -28,6 +29,7 @@ import org.activiti.cloud.organization.api.ModelValidationError;
 import org.activiti.cloud.organization.api.ValidationContext;
 import org.activiti.cloud.organization.api.process.ProcessVariableMapping;
 import org.activiti.cloud.organization.api.process.ServiceTaskActionType;
+import org.activiti.cloud.organization.api.process.VariableMappingType;
 import org.activiti.cloud.services.organization.converter.ConnectorActionParameter;
 import org.activiti.cloud.services.organization.converter.ConnectorModelAction;
 import org.activiti.cloud.services.organization.converter.ConnectorModelContentConverter;
@@ -48,6 +50,11 @@ public class TaskMappingsServiceTaskImplementationValidator implements TaskMappi
             "Unknown %s connector parameter name in process extensions: %s";
     public static final String UNKNOWN_CONNECTOR_PARAMETER_VALIDATION_ERROR_DESCRIPTION =
             "The extensions for process '%s' contains mappings to task '%s' for an unknown %s connector parameter name '%s'";
+
+    public static final String INVALID_CONNECTOR_PARAMETER_MAPPING_VALIDATION_ERROR_PROBLEM =
+            "Invalid %s mapping type in process extensions: %s";
+    public static final String INVALID_CONNECTOR_PARAMETER_MAPPING_VALIDATION_ERROR_DESCRIPTION =
+            "The extensions for process '%s' contains mappings to task '%s' for an invalid %s parameter type '%s'";
 
     private final ConnectorModelType connectorModelType;
 
@@ -91,8 +98,20 @@ public class TaskMappingsServiceTaskImplementationValidator implements TaskMappi
                                                                 String processVariableMappingKey,
                                                                 ProcessVariableMapping processVariableMapping,
                                                                 Map<String, ConnectorModelAction> availableConnectorActions) {
-
-        String connectorParameterName = actionType == INPUTS ? processVariableMappingKey : processVariableMapping.getValue();
+        
+        if(actionType == OUTPUTS && processVariableMapping.getType() != VariableMappingType.VARIABLE) {
+          return Optional.of(createModelValidationError(
+            format(INVALID_CONNECTOR_PARAMETER_MAPPING_VALIDATION_ERROR_PROBLEM,
+                   actionType.name().toLowerCase(),
+                   processVariableMappingKey),
+            format(INVALID_CONNECTOR_PARAMETER_MAPPING_VALIDATION_ERROR_DESCRIPTION,
+                   processId,
+                   task.getId(),
+                   actionType.name().toLowerCase(),
+                   processVariableMappingKey)));   
+        }
+        
+        String connectorParameterName = actionType == INPUTS ? processVariableMappingKey : (String)processVariableMapping.getValue();
         return getTaskImplementation(task)
                 .map(availableConnectorActions::get)
                 .flatMap(action -> Optional.ofNullable(actionType == INPUTS ? action.getInputs() : action.getOutputs())
