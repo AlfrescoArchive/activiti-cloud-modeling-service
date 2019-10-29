@@ -21,15 +21,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.activiti.bpmn.converter.BpmnXMLConverter;
 import org.activiti.bpmn.model.BpmnModel;
-import org.activiti.bpmn.model.CallActivity;
-import org.activiti.bpmn.model.FlowElement;
-import org.activiti.bpmn.model.UserTask;
+import org.activiti.bpmn.model.Process;
 import org.activiti.cloud.organization.api.ModelContentConverter;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ProcessModelType;
@@ -95,52 +92,33 @@ public class ProcessModelContentConverter implements ModelContentConverter<BpmnP
   public FileContent overrideModelId(FileContent fileContent,
                                      HashMap<String, String> modelIdentifiers) {
     Optional<BpmnProcessModelContent> modelContent = this.convertToModelContent(fileContent.getFileContent());
-    this.overrideProcessId(modelContent.get(), modelIdentifiers);
+      this.overrideAllProcessDefinition(modelContent.get(), modelIdentifiers);
     return new FileContent(fileContent.getFilename(), fileContent.getContentType(),
       this.convertToBytes(modelContent.get()));
   }
 
-  public void overrideProcessId(BpmnProcessModelContent processModelContent,
-                                HashMap<String, String> modelIdentifiers){
-    processModelContent.getBpmnModel().getProcesses().forEach(process -> {
-      String validIdentifier = modelIdentifiers.get(process.getId());
-      if(validIdentifier != null && validIdentifier != process.getId()){
-        process.setId(validIdentifier);
-      }
-      process.getFlowElements().stream()
-        .filter(flowElement -> this.isElementToFix(flowElement))
-        .map(flowElement -> {
-            if(flowElement instanceof CallActivity) {
-              return this.updateIdForCallAcvity(flowElement, modelIdentifiers);
-            }else if(flowElement instanceof UserTask){
-              return this.updateIdForUserTask(flowElement, modelIdentifiers);
-            }else{
-              return flowElement;
-            }
-        })
-        .collect(Collectors.toList());
-    });
-  }
-
-  private FlowElement updateIdForUserTask(FlowElement flowElement, HashMap<String, String> modelIdentifiers) {
-      UserTask userTask = (UserTask) flowElement;
-      String targetFormId = modelIdentifiers.get(userTask.getFormKey());
-      if(targetFormId != null) {
-        userTask.setFormKey(targetFormId);
-      }
-      return flowElement;
-  }
-
-  private FlowElement updateIdForCallAcvity(FlowElement flowElement, HashMap<String, String> modelIdentifiers){
-    CallActivity callActivity = ((CallActivity) flowElement);
-    String targetProcessId = modelIdentifiers.get(callActivity.getCalledElement());
-    if(targetProcessId != null) {
-      callActivity.setCalledElement(targetProcessId);
+    public void overrideAllProcessDefinition(BpmnProcessModelContent processModelContent,
+                                             HashMap<String, String> modelIdentifiers) {
+        ReferenceIdOverrider referenceIdOverrider = new ReferenceIdOverrider(modelIdentifiers);
+        processModelContent.getBpmnModel().getProcesses().forEach(process -> {
+            overrideProcessId(process, modelIdentifiers);
+            overrideAllIdReferences(process, referenceIdOverrider);
+        });
     }
-    return flowElement;
-  }
 
-  private boolean isElementToFix(FlowElement flowElement){
-    return flowElement instanceof CallActivity || flowElement instanceof UserTask;
-  }
+    private void overrideProcessId(Process process,
+                                   HashMap<String, String> modelIdentifiers) {
+        String validIdentifier = modelIdentifiers.get(process.getId());
+        if(validIdentifier != null && validIdentifier != process.getId()){
+          process.setId(validIdentifier);
+        }
+    }
+
+    public void overrideAllIdReferences(Process process,
+                                        ReferenceIdOverrider referenceIdOverrider) {
+        process.getFlowElements().forEach(flowElement -> {
+            flowElement.accept(referenceIdOverrider);
+        });
+    }
+
 }

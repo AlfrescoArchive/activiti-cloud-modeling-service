@@ -42,7 +42,7 @@ public class ProcessModelContentConverterTest {
         bpmnModel.addProcess(process);
         BpmnProcessModelContent processModelContent = new BpmnProcessModelContent(bpmnModel);
 
-        processModelContentConverter.overrideProcessId(processModelContent, modelIdentifiers);
+        processModelContentConverter.overrideAllProcessDefinition(processModelContent, modelIdentifiers);
 
         Process processByNewId = processModelContent.getBpmnModel().getProcessById(newProcessId);
         assertThat(processByNewId).isSameAs(process);
@@ -64,8 +64,7 @@ public class ProcessModelContentConverterTest {
         bpmnModel.addProcess(process);
         BpmnProcessModelContent processModelContent = new BpmnProcessModelContent(bpmnModel);
 
-
-        processModelContentConverter.overrideProcessId(processModelContent, modelIdentifiers);
+        processModelContentConverter.overrideAllProcessDefinition(processModelContent, modelIdentifiers);
 
         Process processByNewId = processModelContent.getBpmnModel().getProcessById(processId);
         assertThat(processByNewId).isSameAs(process);
@@ -88,14 +87,13 @@ public class ProcessModelContentConverterTest {
         BpmnProcessModelContent processModelContent = new BpmnProcessModelContent(bpmnModel);
 
 
-        processModelContentConverter.overrideProcessId(processModelContent, modelIdentifiers);
+        processModelContentConverter.overrideAllProcessDefinition(processModelContent, modelIdentifiers);
 
         Process processById = processModelContent.getBpmnModel().getProcessById(missingProcessId);
         assertThat(processById).isSameAs(process);
         Process processByNewId = processModelContent.getBpmnModel().getProcessById(newProcessId);
         assertThat(processByNewId).isNull();
     }
-
 
 }
 
