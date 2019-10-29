@@ -30,14 +30,12 @@ import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.bpmn.model.CallActivity;
 import org.activiti.bpmn.model.FlowElement;
 import org.activiti.bpmn.model.UserTask;
-import org.activiti.cloud.organization.api.ModelContent;
 import org.activiti.cloud.organization.api.ModelContentConverter;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ProcessModelType;
 import org.activiti.cloud.organization.core.error.ModelingException;
 import org.activiti.cloud.services.common.file.FileContent;
 import org.apache.commons.lang3.ArrayUtils;
-import org.springframework.stereotype.Component;
 
 import static org.activiti.bpmn.converter.util.BpmnXMLUtil.createSafeXmlInputFactory;
 
@@ -97,13 +95,13 @@ public class ProcessModelContentConverter implements ModelContentConverter<BpmnP
   public FileContent overrideModelId(FileContent fileContent,
                                      HashMap<String, String> modelIdentifiers) {
     Optional<BpmnProcessModelContent> modelContent = this.convertToModelContent(fileContent.getFileContent());
-    this.fixProcessModel(modelContent.get(), modelIdentifiers);
+    this.overrideProcessId(modelContent.get(), modelIdentifiers);
     return new FileContent(fileContent.getFilename(), fileContent.getContentType(),
       this.convertToBytes(modelContent.get()));
   }
 
-  private void fixProcessModel(BpmnProcessModelContent processModelContent,
-                               HashMap<String, String> modelIdentifiers){
+  public void overrideProcessId(BpmnProcessModelContent processModelContent,
+                                HashMap<String, String> modelIdentifiers){
     processModelContent.getBpmnModel().getProcesses().forEach(process -> {
       String validIdentifier = modelIdentifiers.get(process.getId());
       if(validIdentifier != null && validIdentifier != process.getId()){
