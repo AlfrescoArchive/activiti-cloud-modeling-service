@@ -19,7 +19,7 @@ package org.activiti.cloud.services.organization.converter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -88,37 +88,31 @@ public class ProcessModelContentConverter implements ModelContentConverter<BpmnP
         }
     }
 
-  @Override
-  public FileContent overrideModelId(FileContent fileContent,
-                                     HashMap<String, String> modelIdentifiers) {
-    Optional<BpmnProcessModelContent> modelContent = this.convertToModelContent(fileContent.getFileContent());
-      this.overrideAllProcessDefinition(modelContent.get(), modelIdentifiers);
-    return new FileContent(fileContent.getFilename(), fileContent.getContentType(),
-      this.convertToBytes(modelContent.get()));
-  }
+    @Override
+    public FileContent overrideModelId(FileContent fileContent,
+                                       Map<String, String> modelIdentifiers) {
+        Optional<BpmnProcessModelContent> processModelContent = this.convertToModelContent(fileContent.getFileContent());
+        if (processModelContent.isPresent()) {
+            BpmnProcessModelContent modelContent = processModelContent.get();
+            ReferenceIdOverrider referenceIdOverrider = new ReferenceIdOverrider(modelIdentifiers);
+            this.overrideAllProcessDefinition(modelContent, referenceIdOverrider);
+            byte[] overriddenContent = this.convertToBytes(modelContent);
+            return new FileContent(fileContent.getFilename(), fileContent.getContentType(), overriddenContent);
+        }
+        return fileContent;
+    }
 
     public void overrideAllProcessDefinition(BpmnProcessModelContent processModelContent,
-                                             HashMap<String, String> modelIdentifiers) {
-        ReferenceIdOverrider referenceIdOverrider = new ReferenceIdOverrider(modelIdentifiers);
+                                             ReferenceIdOverrider referenceIdOverrider) {
         processModelContent.getBpmnModel().getProcesses().forEach(process -> {
-            overrideProcessId(process, modelIdentifiers);
+            referenceIdOverrider.overrideProcessId(process);
             overrideAllIdReferences(process, referenceIdOverrider);
         });
     }
 
-    private void overrideProcessId(Process process,
-                                   HashMap<String, String> modelIdentifiers) {
-        String validIdentifier = modelIdentifiers.get(process.getId());
-        if(validIdentifier != null && validIdentifier != process.getId()){
-          process.setId(validIdentifier);
-        }
-    }
-
-    public void overrideAllIdReferences(Process process,
+    private void overrideAllIdReferences(Process process,
                                         ReferenceIdOverrider referenceIdOverrider) {
-        process.getFlowElements().forEach(flowElement -> {
-            flowElement.accept(referenceIdOverrider);
-        });
+        process.getFlowElements().forEach(element -> element.accept(referenceIdOverrider));
     }
 
 }

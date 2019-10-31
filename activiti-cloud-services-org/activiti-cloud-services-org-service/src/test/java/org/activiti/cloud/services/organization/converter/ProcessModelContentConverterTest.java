@@ -1,98 +1,69 @@
 package org.activiti.cloud.services.organization.converter;
 
 import java.util.HashMap;
+import java.util.Map;
 
+import org.activiti.bpmn.converter.BpmnXMLConverter;
 import org.activiti.bpmn.model.BpmnModel;
+import org.activiti.bpmn.model.FlowElement;
 import org.activiti.bpmn.model.Process;
+import org.activiti.cloud.organization.api.ProcessModelType;
+import org.activiti.cloud.services.common.file.FileContent;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ProcessModelContentConverterTest {
 
-    @InjectMocks
     private ProcessModelContentConverter processModelContentConverter;
+    @Mock
+    private ProcessModelType processModelType;
+    @Mock
+    private BpmnXMLConverter bpmnXMLConverter;
 
-//    @Test
-//    public void should_overrideProcessId() {
-//        FileContent fileContent;
-//        HashMap<String, String> map;
-//
-//        FileContent result = processModelContentConverter.overrideProcessId(fileContent, map);
-//
-//        //FIXME: finish testing for overrideProcessIdId
-//    }
+    @Mock
+    private FlowElement flowElement;
 
-    @Test
-    public void should_overrideProcessId_when_newProcessId() {
-        HashMap<String, String> modelIdentifiers = new HashMap<>();
-        String oldProcessId = "processId";
-        String newProcessId = "new-processId";
-        modelIdentifiers.put(oldProcessId, newProcessId);
+    @Mock
+    private ReferenceIdOverrider referenceIdOverrider;
 
-        Process process = new Process();
-        process.setId(oldProcessId);
-        process.setName("processName");
-
-        BpmnModel bpmnModel = new BpmnModel();
-        bpmnModel.addProcess(process);
-        BpmnProcessModelContent processModelContent = new BpmnProcessModelContent(bpmnModel);
-
-        processModelContentConverter.overrideAllProcessDefinition(processModelContent, modelIdentifiers);
-
-        Process processByNewId = processModelContent.getBpmnModel().getProcessById(newProcessId);
-        assertThat(processByNewId).isSameAs(process);
-        Process processByOldId = processModelContent.getBpmnModel().getProcessById(oldProcessId);
-        assertThat(processByOldId).isNull();
+    @Before
+    public void setUp() {
+        processModelContentConverter = new ProcessModelContentConverter(processModelType, bpmnXMLConverter);
     }
 
     @Test
-    public void should_notOverrideProcessId_when_sameProcessId() {
-        HashMap<String, String> modelIdentifiers = new HashMap<>();
-        String processId = "processId";
-        modelIdentifiers.put(processId, processId);
+    public void should_notOverrideModelId_whenModelContentEmpty() {
+        FileContent fileContent = mock(FileContent.class);
+        byte[] mock = new byte[0];
+        given(fileContent.getFileContent()).willReturn(mock);
 
-        Process process = new Process();
-        process.setId(processId);
-        process.setName("processName");
+        Map<String, String> modelIds = new HashMap<>();
+        FileContent result = processModelContentConverter.overrideModelId(fileContent, modelIds);
 
-        BpmnModel bpmnModel = new BpmnModel();
-        bpmnModel.addProcess(process);
-        BpmnProcessModelContent processModelContent = new BpmnProcessModelContent(bpmnModel);
-
-        processModelContentConverter.overrideAllProcessDefinition(processModelContent, modelIdentifiers);
-
-        Process processByNewId = processModelContent.getBpmnModel().getProcessById(processId);
-        assertThat(processByNewId).isSameAs(process);
+        assertThat(result).isSameAs(fileContent);
     }
 
     @Test
-    public void should_notOverrideProcessId_when_processIdNotFound() {
-        HashMap<String, String> modelIdentifiers = new HashMap<>();
-        String processId = "processId";
-        String newProcessId = "newProcessId";
-        modelIdentifiers.put(processId, newProcessId);
-
+    public void should_overrideAllProcessDefinition_when_newProcessId() {
         Process process = new Process();
-        String missingProcessId = "missingProcessId";
-        process.setId(missingProcessId);
-        process.setName("processName");
+        process.addFlowElement(flowElement);
 
         BpmnModel bpmnModel = new BpmnModel();
         bpmnModel.addProcess(process);
         BpmnProcessModelContent processModelContent = new BpmnProcessModelContent(bpmnModel);
 
+        processModelContentConverter.overrideAllProcessDefinition(processModelContent, referenceIdOverrider);
 
-        processModelContentConverter.overrideAllProcessDefinition(processModelContent, modelIdentifiers);
-
-        Process processById = processModelContent.getBpmnModel().getProcessById(missingProcessId);
-        assertThat(processById).isSameAs(process);
-        Process processByNewId = processModelContent.getBpmnModel().getProcessById(newProcessId);
-        assertThat(processByNewId).isNull();
+        verify(referenceIdOverrider).overrideProcessId(process);
+        verify(flowElement).accept(referenceIdOverrider);
     }
 
 }

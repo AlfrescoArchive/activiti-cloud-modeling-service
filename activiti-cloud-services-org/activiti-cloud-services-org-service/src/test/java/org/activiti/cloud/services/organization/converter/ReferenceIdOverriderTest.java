@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.activiti.bpmn.model.CallActivity;
+import org.activiti.bpmn.model.Process;
 import org.activiti.bpmn.model.StartEvent;
 import org.activiti.bpmn.model.UserTask;
 import org.junit.Before;
@@ -19,12 +20,15 @@ public class ReferenceIdOverriderTest {
     public void setUp() {
         Map<String, String> map = new HashMap<>();
         map.put("oldFormKey", "newFormKey");
+        map.put("sameFormKey", "sameFormKey");
         map.put("oldCalledElement", "newCalledElement");
+        map.put("sameCalledElement", "sameCalledElement");
+        map.put("oldProcessId", "newProcessId");
         referenceIdOverrider = new ReferenceIdOverrider(map);
     }
 
     @Test
-    public void should_overrideUserTask_when_hasNewValue() {
+    public void should_overrideUserTask_when_hasNewFormKey() {
         UserTask userTask = new UserTask();
         userTask.setFormKey("oldFormKey");
 
@@ -34,17 +38,27 @@ public class ReferenceIdOverriderTest {
     }
 
     @Test
-    public void should_overrideUserTask_when_noNewValue() {
+    public void should_notOverrideUserTask_when_sameFormKey() {
         UserTask userTask = new UserTask();
-        userTask.setFormKey("noNewFormKey");
+        userTask.setFormKey("sameFormKey");
 
         referenceIdOverrider.override(userTask);
 
-        assertThat(userTask.getFormKey()).isEqualTo("noNewFormKey");
+        assertThat(userTask.getFormKey()).isEqualTo("sameFormKey");
     }
 
     @Test
-    public void should_overrideCallActivity_when_hasNewValue() {
+    public void should_overrideUserTask_when_notNewFormKey() {
+        UserTask userTask = new UserTask();
+        userTask.setFormKey("notNewFormKey");
+
+        referenceIdOverrider.override(userTask);
+
+        assertThat(userTask.getFormKey()).isEqualTo("notNewFormKey");
+    }
+
+    @Test
+    public void should_overrideCallActivity_when_hasNewCalledElement() {
         CallActivity callActivity = new CallActivity();
         callActivity.setCalledElement("oldCalledElement");
 
@@ -54,17 +68,27 @@ public class ReferenceIdOverriderTest {
     }
 
     @Test
-    public void should_overrideCallActivity_when_noNewValue() {
+    public void should_notOverrideCallActivity_when_sameCalledElement() {
         CallActivity callActivity = new CallActivity();
-        callActivity.setCalledElement("noNewCalledElement");
+        callActivity.setCalledElement("sameCalledElement");
 
         referenceIdOverrider.override(callActivity);
 
-        assertThat(callActivity.getCalledElement()).isEqualTo("noNewCalledElement");
+        assertThat(callActivity.getCalledElement()).isEqualTo("sameCalledElement");
     }
 
     @Test
-    public void should_overrideStartEvent_when_hasNewValue() {
+    public void should_overrideCallActivity_when_notNewCalledElement() {
+        CallActivity callActivity = new CallActivity();
+        callActivity.setCalledElement("notNewCalledElement");
+
+        referenceIdOverrider.override(callActivity);
+
+        assertThat(callActivity.getCalledElement()).isEqualTo("notNewCalledElement");
+    }
+
+    @Test
+    public void should_overrideStartEvent_when_hasNewFormKey() {
         StartEvent startEvent = new StartEvent();
         startEvent.setFormKey("oldFormKey");
 
@@ -74,12 +98,42 @@ public class ReferenceIdOverriderTest {
     }
 
     @Test
-    public void should_overrideStartEvent_when_noNewValue() {
+    public void should_notOverrideStartEvent_when_sameFormKey() {
         StartEvent startEvent = new StartEvent();
-        startEvent.setFormKey("noNewFormKey");
+        startEvent.setFormKey("sameFormKey");
 
         referenceIdOverrider.override(startEvent);
 
-        assertThat(startEvent.getFormKey()).isEqualTo("noNewFormKey");
+        assertThat(startEvent.getFormKey()).isEqualTo("sameFormKey");
+    }
+
+    @Test
+    public void should_overrideStartEvent_when_notNewFormKey() {
+        StartEvent startEvent = new StartEvent();
+        startEvent.setFormKey("notNewFormKey");
+
+        referenceIdOverrider.override(startEvent);
+
+        assertThat(startEvent.getFormKey()).isEqualTo("notNewFormKey");
+    }
+
+    @Test
+    public void should_overrideProcessId_when_newProcessId() {
+        Process process = new Process();
+        process.setId("oldProcessId");
+
+        referenceIdOverrider.overrideProcessId(process);
+
+        assertThat(process.getId()).isEqualTo("newProcessId");
+    }
+
+    @Test
+    public void should_notOverrideProcessId_when_processIdNotFound() {
+        Process process = new Process();
+        process.setId("notNewProcessId");
+
+        referenceIdOverrider.overrideProcessId(process);
+
+        assertThat(process.getId()).isEqualTo("notNewProcessId");
     }
 }
