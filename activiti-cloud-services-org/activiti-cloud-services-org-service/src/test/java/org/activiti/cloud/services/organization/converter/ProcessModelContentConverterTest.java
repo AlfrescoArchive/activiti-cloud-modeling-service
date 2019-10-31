@@ -42,8 +42,8 @@ public class ProcessModelContentConverterTest {
     @Test
     public void should_notOverrideModelId_whenModelContentEmpty() {
         FileContent fileContent = mock(FileContent.class);
-        byte[] mock = new byte[0];
-        given(fileContent.getFileContent()).willReturn(mock);
+        byte[] emptyByteArray = new byte[0];
+        given(fileContent.getFileContent()).willReturn(emptyByteArray);
 
         Map<String, String> modelIds = new HashMap<>();
         FileContent result = processModelContentConverter.overrideModelId(fileContent, modelIds);
