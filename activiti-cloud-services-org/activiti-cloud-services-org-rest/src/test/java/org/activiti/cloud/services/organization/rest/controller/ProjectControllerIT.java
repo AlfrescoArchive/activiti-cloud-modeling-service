@@ -532,6 +532,33 @@ public class ProjectControllerIT {
     }
 
     @Test
+    public void should_throwSemanticModelValidationException_when_exportingProjectWithProcessExtensionsForValueOutputProcessVariableMapping() throws Exception {
+        ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("invalid-project"));
+        Model processModel = modelService.importSingleModel(project,
+            processModelType,
+            processFileContent("RankMovie",
+                resourceAsByteArray("process/RankMovie.bpmn20.xml")));
+        modelRepository.updateModel(processModel,
+            processModelWithExtensions("process-model",
+                extensions(resourceAsByteArray("process-extensions/RankMovie-extensions-value-output-process-variable.json"))));
+        modelRepository.createModel(connectorModel(project,
+            "movies",
+            resourceAsByteArray("connector/movies.json")));
+
+        assertThatResponse(
+            mockMvc.perform(
+                get("{version}/projects/{projectId}/export",
+                    API_VERSION,
+                    project.getId()))
+                .andExpect(status().isBadRequest())
+                .andReturn())
+            .isSemanticValidationException()
+            .hasValidationErrorMessages(
+                "The extensions for process 'process-" + processModel.getId() +
+                    "' contains mappings to task 'Task_1spvopd' for an invalid outputs parameter type 'ranking-output-variable'");
+    }
+
+    @Test
     public void should_throwSemanticModelValidationException_when_exportingProjectWithProcessExtensionsForConnectorWithoutInputsOutputs() throws Exception {
         ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("invalid-project"));
         Model processModel = modelService.importSingleModel(project,
