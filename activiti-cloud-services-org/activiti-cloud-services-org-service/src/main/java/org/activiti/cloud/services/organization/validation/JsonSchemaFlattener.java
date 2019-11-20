@@ -75,8 +75,7 @@ public class JsonSchemaFlattener {
         }
 
         return reply;
-    }
-    
+    }   
     
     private Object handleValue(Object value) {
         if (value instanceof JSONObject) {
@@ -198,6 +197,3 @@ public class JsonSchemaFlattener {
     }  
    
 }
-
-
-
