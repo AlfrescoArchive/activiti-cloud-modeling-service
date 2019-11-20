@@ -121,10 +121,12 @@ public class JsonSchemaFlattener {
             if (s.startsWith("classpath:")) {
                 name = s.substring(11);            
             } else {
-                int i = s.indexOf("#/");
+                int i = s.indexOf("/#/");
                 if (i > 0) {
-                    name = s.substring(1,i);
-                    suffix = s.substring(i);
+                    name = s.substring(0,i);
+                    suffix = s.substring(i+2);
+                } else {
+                    name = s;
                 }
             }
             
@@ -141,8 +143,9 @@ public class JsonSchemaFlattener {
                     
                 }
                 
-                s = "#/definitions/" + secName + (suffix != null ? suffix : "");
-                return s;
+                if (o != null) {
+                    return ("#/definitions/" + secName + (suffix != null ? suffix : ""));
+                }
              }                        
             
         } catch (IOException e) {
