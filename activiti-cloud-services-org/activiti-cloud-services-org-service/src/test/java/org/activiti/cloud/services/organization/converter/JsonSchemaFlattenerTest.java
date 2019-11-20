@@ -13,7 +13,7 @@ import org.springframework.core.io.ClassPathResource;
 
 public class JsonSchemaFlattenerTest {
     
-    private JsonSchemaFlattener flattener = new JsonSchemaFlattener();   
+   private JsonSchemaFlattener flattener = new JsonSchemaFlattener();   
    
    @Test
    public void should_flattenProcessExtensionSchema() throws IOException {
