@@ -21,6 +21,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -35,9 +38,9 @@ public class JsonSchemaFlattener {
          
     }
     
-    private JSONObject handleJSONObject(JSONObject jsonObject) {
+    private Optional<JSONObject> handleJSONObject(JSONObject jsonObject) {
         
-        JSONObject reply = null;
+        Optional<JSONObject> reply = Optional.empty();
         
         if (!jsonObject.isEmpty()) {
             Iterator iterator = jsonObject.keys();
@@ -45,17 +48,32 @@ public class JsonSchemaFlattener {
             while (iterator.hasNext()) {
                 String key = (String) iterator.next();
                 Object value = jsonObject.get(key);
-                Object o = null;
                 
                 if (isKeyToCheck(key)) {
-                    o = checkUpdateValue(value);     
-                } else {
-                    o = handleValue(value); 
-                }
-                if (o != null) {
-                    jsonObject.put(key, o);
+                    Optional<String> updatedString = getUpdatedValue(value);    
+                    if (updatedString.isPresent()) {
+                        jsonObject.put(key, updatedString.get());
+                        
+                        reply = Optional.of(jsonObject);
+                    }
                     
-                    reply = jsonObject;
+                } else {                  
+                    if (value instanceof JSONObject) {
+                        Optional<JSONObject> updatedObject = handleJSONObject((JSONObject) value);
+                        if (updatedObject.isPresent()) {
+                            jsonObject.put(key, updatedObject.get());
+                            
+                            reply = Optional.of(jsonObject);
+                        }
+                        
+                    } else if (value instanceof JSONArray) {
+                        Optional<JSONArray> updatedArray = handleJSONArray((JSONArray) value);
+                        if (updatedArray.isPresent()) {
+                            jsonObject.put(key, updatedArray.get());
+                            
+                            reply = Optional.of(jsonObject);
+                        }
+                    } 
                 }
             }
         }
@@ -63,84 +81,95 @@ public class JsonSchemaFlattener {
         return reply;
     }
     
-    JSONArray handleJSONArray(JSONArray jsonArray) {
-        JSONArray reply = null;
+    Optional<JSONArray> handleJSONArray(JSONArray jsonArray) {
+        Optional<JSONArray> reply = Optional.empty();
         
         for (int i = 0; i < jsonArray.length(); i++) {
-            Object o = handleValue(jsonArray.get(i));
-            if (o != null) {
-                jsonArray.put(i, o);
-                reply = jsonArray;
-            }
+            Object value = jsonArray.get(i);
+            
+            if (value instanceof JSONObject) {
+                Optional<JSONObject> updatedObject = handleJSONObject((JSONObject) value);
+                if (updatedObject.isPresent()) {
+                    jsonArray.put(i, updatedObject.get());
+                    reply = Optional.of(jsonArray);
+                }
+                
+            } else if (value instanceof JSONArray) {
+                Optional<JSONArray> updatedArray = handleJSONArray((JSONArray) value);
+                if (updatedArray.isPresent()) {
+                    jsonArray.put(i, updatedArray.get());
+                    
+                    reply = Optional.of(jsonArray);
+                }
+            } 
         }
 
         return reply;
     }   
-    
-    private Object handleValue(Object value) {
-        if (value instanceof JSONObject) {
-            return handleJSONObject((JSONObject) value);
-        } else if (value instanceof JSONArray) {
-            return handleJSONArray((JSONArray) value);
-        } else {
-            return null;
-        }
-    }
+   
     
     private boolean isKeyToCheck(String key) {
         return Objects.equals("$ref", key);
     }
     
-    private Object checkUpdateValue(Object value) {
-        if (!(value instanceof String)) {
-            return null;
-        }
-         
-        String s = (String)value;  
-        if (s.startsWith("#")) {
-            return null;
+    private Optional<String> getClassPathFileName(String value) {
+        String regex = "classpath:\\/\\/(.*)";
+        Matcher matcher = Pattern.compile(regex)
+                                 .matcher(value);
+        if (matcher.find()) {
+            return Optional.of(matcher.group(1).toString());  
         }
         
-        try {
-            JSONObject o = null;
-            String name = null, secName = null;
-            String suffix =  null;
-            
-            if (s.startsWith("classpath:")) {
-                name = s.substring(11);            
-            } else {
-                int i = s.indexOf("/#/");
-                if (i > 0) {
-                    name = s.substring(0,i);
-                    suffix = s.substring(i+2);
+        return Optional.empty();  
+    }
+
+    private Optional<String> getUpdatedValue(Object value) {
+        
+        Optional<String> stringValue = Optional.of(value)
+                                        .filter(String.class::isInstance)
+                                        .map(String.class::cast)
+                                        .filter(s -> !s.startsWith("#"));
+        
+        if (stringValue.isPresent()) {
+         
+            Optional<String> stringRef = Optional.empty();
+            Optional<String> fileName = getClassPathFileName(stringValue.get());
+        
+            if (!fileName.isPresent()) {
+                String regex = "(.*)\\/#\\/(.*)";
+                Matcher matcher = Pattern.compile(regex)
+                                         .matcher(stringValue.get());
+                if (matcher.find()) {
+                    fileName = Optional.of(matcher.group(1).toString());  
+                    stringRef = Optional.of(matcher.group(2).toString());
                 } else {
-                    name = s;
-                }
+                    fileName = Optional.of(stringValue.get());  
+                }  
             }
+        
+            if (fileName.isPresent()) {
             
-            if (name != null) {
-                secName = getSectionNameFromFileName(name);
-                o = (JSONObject)addDefinitions.get(secName);
-                
-                if (o == null) {
-                    o = loadResourceFromClassPass(name);  
+                String sectionName = getSectionNameFromFileName(fileName.get());
+                JSONObject jsonObject = (JSONObject)addDefinitions.get(sectionName);
+            
+                if (jsonObject == null) {
                     
-                    if (o != null) {
-                        addDefinitions.put(secName, flattenIntern(o));     
-                    }
-                    
+                    try {
+                        jsonObject = loadResourceFromClassPass(fileName.get());                       
+                    } catch (IOException e) {
+                        jsonObject = null;;
+                    }  
                 }
                 
-                if (o != null) {
-                    return ("#/definitions/" + secName + (suffix != null ? suffix : ""));
+                if (jsonObject != null) {
+                    addDefinitions.put(sectionName, flattenIntern(jsonObject).get());   
+                    return Optional.of("#/definitions/" + sectionName + (stringRef.isPresent() ? stringRef.get() : ""));   
                 }
-             }                        
             
-        } catch (IOException e) {
-            
+            } 
         }
-  
-        return null;
+        
+        return Optional.empty();
     }
         
     private JSONObject loadResourceFromClassPass(String schemaFileName) throws IOException  {
@@ -150,17 +179,17 @@ public class JsonSchemaFlattener {
         }        
     }
       
-    private JSONObject flattenIntern(JSONObject jsonSchema) {
+    private Optional<JSONObject> flattenIntern(JSONObject jsonSchema) {
         
-        if (jsonSchema.isEmpty()) {
-            return jsonSchema;
-        }
+        if (!jsonSchema.isEmpty()) {
+            Optional<JSONObject> reply = handleJSONObject(jsonSchema);  
         
-        JSONObject reply = handleJSONObject(jsonSchema);  
-        if (reply == null) {
-            reply = jsonSchema;
+            if (reply.isPresent()) {
+                return reply;
+           
+            }
         }
-        return reply;
+        return Optional.of(jsonSchema);
     }  
     
     public String getSectionNameFromFileName(String fileName) {
@@ -176,14 +205,19 @@ public class JsonSchemaFlattener {
     
     public JSONObject flatten(JSONObject jsonSchema) {
         
+        if (jsonSchema == null) {
+            return new JSONObject();
+        }
+        
         addDefinitions.clear();
-        JSONObject reply = flattenIntern(jsonSchema);  
-   
+        Optional<JSONObject> reply = flattenIntern(jsonSchema);  
+        JSONObject replyObject = reply.get();
+
         if (!addDefinitions.isEmpty()) {
-            
+
             JSONObject definitions = null;
-            if (reply.has("definitions")) {
-                definitions = (JSONObject)reply.get("definitions");
+            if (replyObject.has("definitions")) {
+                definitions = (JSONObject)replyObject.get("definitions");
             } else {
                 definitions = new JSONObject();
             }
@@ -191,9 +225,10 @@ public class JsonSchemaFlattener {
                 definitions.put(entry.getKey(), entry.getValue());
             }
             
-            reply.put("definitions", definitions);
+            replyObject.put("definitions", definitions);
         }
-        return reply;
+        
+        return replyObject;
     }  
    
 }
