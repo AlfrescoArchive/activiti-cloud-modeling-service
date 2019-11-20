@@ -136,7 +136,7 @@ public class JsonSchemaFlattener {
                     o = loadResourceFromClassPass(name);  
                     
                     if (o != null) {
-                        addDefinitions.put(secName, flatten(o));     
+                        addDefinitions.put(secName, flattenIntern(o));     
                     }
                     
                 }
@@ -159,7 +159,7 @@ public class JsonSchemaFlattener {
         }        
     }
       
-    public JSONObject flatten(JSONObject jsonSchema) {
+    private JSONObject flattenIntern(JSONObject jsonSchema) {
         
         if (jsonSchema.isEmpty()) {
             return jsonSchema;
@@ -169,6 +169,13 @@ public class JsonSchemaFlattener {
         if (reply == null) {
             reply = jsonSchema;
         }
+        return reply;
+    }  
+    
+    public JSONObject flatten(JSONObject jsonSchema) {
+        
+        JSONObject reply = flattenIntern(jsonSchema);  
+   
         if (!addDefinitions.isEmpty()) {
             
             JSONObject definitions = (JSONObject)reply.get("definitions");
@@ -179,7 +186,6 @@ public class JsonSchemaFlattener {
                 definitions.put(entry.getKey(), entry.getValue());
             }
         }
-
         return reply;
     }  
    
