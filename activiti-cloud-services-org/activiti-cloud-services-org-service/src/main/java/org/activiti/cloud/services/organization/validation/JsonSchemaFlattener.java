@@ -35,17 +35,6 @@ public class JsonSchemaFlattener {
          
     }
     
-    private String getSectionNameFromFileName(String fileName) {
-        if (fileName == null) {
-            return null;
-        }
-        
-        return fileName
-                .replaceAll(".json","")
-                .replaceAll("[/-]","_")
-                .replaceAll("[^a-zA-Z0-9_]+","");
-    }
-    
     private JSONObject handleJSONObject(JSONObject jsonObject) {
         
         JSONObject reply = null;
@@ -175,19 +164,35 @@ public class JsonSchemaFlattener {
         return reply;
     }  
     
+    public String getSectionNameFromFileName(String fileName) {
+        if (fileName == null) {
+            return null;
+        }
+        
+        return fileName
+                .replaceAll(".json","")
+                .replaceAll("[/-]","_")
+                .replaceAll("[^a-zA-Z0-9_]+","");
+    }
+    
     public JSONObject flatten(JSONObject jsonSchema) {
         
+        addDefinitions.clear();
         JSONObject reply = flattenIntern(jsonSchema);  
    
         if (!addDefinitions.isEmpty()) {
             
-            JSONObject definitions = (JSONObject)reply.get("definitions");
-            if (definitions == null) {
-                definitions = reply.put("definitions", new JSONObject());
+            JSONObject definitions = null;
+            if (reply.has("definitions")) {
+                definitions = (JSONObject)reply.get("definitions");
+            } else {
+                definitions = new JSONObject();
             }
             for (Map.Entry<String, Object> entry : addDefinitions.entrySet()) {
                 definitions.put(entry.getKey(), entry.getValue());
             }
+            
+            reply.put("definitions", definitions);
         }
         return reply;
     }  
