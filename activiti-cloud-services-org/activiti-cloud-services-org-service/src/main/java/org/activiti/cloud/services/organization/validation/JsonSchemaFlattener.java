@@ -32,15 +32,23 @@ import org.springframework.core.io.ClassPathResource;
     
 public class JsonSchemaFlattener {
     
-    private Map<String, Object> addDefinitions = new HashMap<>();
-    
     public JsonSchemaFlattener() {
          
     }
     
-    private Optional<JSONObject> handleJSONObject(JSONObject jsonObject) {
-        
-        Optional<JSONObject> reply = Optional.empty();
+    private void handleObject(Object value,
+                              Map<String, Object> addDefinitions) {
+        if (value instanceof JSONObject) {
+            handleJSONObject((JSONObject) value,
+                              addDefinitions);
+        } else if (value instanceof JSONArray) {
+            handleJSONArray((JSONArray) value,
+                             addDefinitions);
+        }
+    }
+    
+    private void handleJSONObject(JSONObject jsonObject,
+                                  Map<String, Object> addDefinitions) {
         
         if (!jsonObject.isEmpty()) {
             Iterator iterator = jsonObject.keys();
@@ -50,63 +58,24 @@ public class JsonSchemaFlattener {
                 Object value = jsonObject.get(key);
                 
                 if (isKeyToCheck(key)) {
-                    Optional<String> updatedString = getUpdatedValue(value);    
-                    if (updatedString.isPresent()) {
-                        jsonObject.put(key, updatedString.get());
-                        
-                        reply = Optional.of(jsonObject);
-                    }
-                    
-                } else {                  
-                    if (value instanceof JSONObject) {
-                        Optional<JSONObject> updatedObject = handleJSONObject((JSONObject) value);
-                        if (updatedObject.isPresent()) {
-                            jsonObject.put(key, updatedObject.get());
-                            
-                            reply = Optional.of(jsonObject);
-                        }
-                        
-                    } else if (value instanceof JSONArray) {
-                        Optional<JSONArray> updatedArray = handleJSONArray((JSONArray) value);
-                        if (updatedArray.isPresent()) {
-                            jsonObject.put(key, updatedArray.get());
-                            
-                            reply = Optional.of(jsonObject);
-                        }
-                    } 
+                    getUpdatedValue(value, addDefinitions).ifPresent(updatedValue -> jsonObject.put(key, updatedValue));                        
+                } else {   
+                    handleObject(value, addDefinitions);
                 }
+                    
             }
         }
-
-        return reply;
     }
     
-    Optional<JSONArray> handleJSONArray(JSONArray jsonArray) {
-        Optional<JSONArray> reply = Optional.empty();
+    private void handleJSONArray(JSONArray jsonArray,
+                                 Map<String, Object> addDefinitions) {
         
-        for (int i = 0; i < jsonArray.length(); i++) {
-            Object value = jsonArray.get(i);
-            
-            if (value instanceof JSONObject) {
-                Optional<JSONObject> updatedObject = handleJSONObject((JSONObject) value);
-                if (updatedObject.isPresent()) {
-                    jsonArray.put(i, updatedObject.get());
-                    reply = Optional.of(jsonArray);
-                }
-                
-            } else if (value instanceof JSONArray) {
-                Optional<JSONArray> updatedArray = handleJSONArray((JSONArray) value);
-                if (updatedArray.isPresent()) {
-                    jsonArray.put(i, updatedArray.get());
-                    
-                    reply = Optional.of(jsonArray);
-                }
-            } 
+        for (int i = 0; i < jsonArray.length(); i++) {        
+            handleObject(jsonArray.get(i),
+                         addDefinitions);
         }
-
-        return reply;
-    }   
-    
+   }   
+      
     private boolean isKeyToCheck(String key) {
         return Objects.equals("$ref", key);
     }
@@ -122,7 +91,8 @@ public class JsonSchemaFlattener {
         return Optional.empty();  
     }
 
-    private Optional<String> getUpdatedValue(Object value) {
+    private Optional<String> getUpdatedValue(Object value,
+                                             Map<String, Object> addDefinitions) {
         
         Optional<String> stringValue = Optional.of(value)
                                         .filter(String.class::isInstance)
@@ -161,7 +131,8 @@ public class JsonSchemaFlattener {
                 }
                 
                 if (jsonObject != null) {
-                    addDefinitions.put(sectionName, flattenIntern(jsonObject).get());   
+                    addDefinitions.put(sectionName, flattenIntern(jsonObject, addDefinitions).get());   
+                    
                     return Optional.of("#/definitions/" + sectionName + (stringRef.isPresent() ? stringRef.get() : ""));   
                 }
             
@@ -178,15 +149,11 @@ public class JsonSchemaFlattener {
         }        
     }
       
-    private Optional<JSONObject> flattenIntern(JSONObject jsonSchema) {
-        
+    private Optional<JSONObject> flattenIntern(JSONObject jsonSchema,
+                                               Map<String, Object> addDefinitions) {
         if (!jsonSchema.isEmpty()) {
-            Optional<JSONObject> reply = handleJSONObject(jsonSchema);  
-        
-            if (reply.isPresent()) {
-                return reply;
-           
-            }
+            handleJSONObject(jsonSchema,
+                             addDefinitions);  
         }
         return Optional.of(jsonSchema);
     }  
@@ -208,9 +175,11 @@ public class JsonSchemaFlattener {
             return new JSONObject();
         }
         
-        addDefinitions.clear();
-        Optional<JSONObject> reply = flattenIntern(jsonSchema);  
-        JSONObject replyObject = reply.get();
+        Map<String, Object> addDefinitions = new HashMap<>();
+        Optional<JSONObject> reply = flattenIntern(jsonSchema,
+                                                   addDefinitions);  
+        
+        JSONObject replyObject = reply.isPresent() ? reply.get() : jsonSchema;
 
         if (!addDefinitions.isEmpty()) {
 
