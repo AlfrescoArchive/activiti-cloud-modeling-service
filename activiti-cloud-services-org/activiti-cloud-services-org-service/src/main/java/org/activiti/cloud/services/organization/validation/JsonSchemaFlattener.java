@@ -106,7 +106,6 @@ public class JsonSchemaFlattener {
 
         return reply;
     }   
-   
     
     private boolean isKeyToCheck(String key) {
         return Objects.equals("$ref", key);
