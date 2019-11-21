@@ -104,7 +104,6 @@ public class JsonSchemaFlattenerTest {
        JSONObject definitions = new JSONObject();
        definitions.put("definition1", definition);
 
-       
        object.put("definitions", definitions);
        
        return object;
