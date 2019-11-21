@@ -100,7 +100,9 @@ public class JsonSchemaFlattenerTest {
        
        JSONObject definition = new JSONObject();    
        definition.put("name1", "value1");
-       definition.put("name2", "value2"); 
+       definition.put("name2", "value2");    
+       definition.put("keywithref", refObject); 
+         
        JSONObject definitions = new JSONObject();
        definitions.put("definition1", definition);
 
