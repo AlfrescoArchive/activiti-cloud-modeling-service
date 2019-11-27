@@ -22,23 +22,24 @@ import static org.activiti.cloud.services.common.util.ContentTypeUtils.removeExt
 import static org.activiti.cloud.services.common.util.ContentTypeUtils.toJsonFilename;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.swing.text.html.Option;
 import javax.transaction.Transactional;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ModelValidationError;
 import org.activiti.cloud.organization.api.Project;
 import org.activiti.cloud.organization.api.ValidationContext;
 import org.activiti.cloud.organization.converter.JsonConverter;
-import org.activiti.cloud.organization.core.error.ImportModelException;
 import org.activiti.cloud.organization.core.error.ImportProjectException;
 import org.activiti.cloud.organization.core.error.SemanticModelValidationException;
 import org.activiti.cloud.organization.repository.ProjectRepository;
@@ -102,7 +103,7 @@ public class ProjectService {
     return projectRepository.getProjects(pageable,
       name);
   }
-
+  
   /**
    * Create an project.
    *

@@ -16,16 +16,24 @@
 
 package org.activiti.cloud.services.organization.rest.controller;
 
+import static org.activiti.cloud.services.common.util.HttpUtils.multipartToFileContent;
+import static org.activiti.cloud.services.common.util.HttpUtils.writeFileToResponse;
+import static org.activiti.cloud.services.organization.rest.api.ProjectRestApi.EXPORT_AS_ATTACHMENT_PARAM_NAME;
+import static org.activiti.cloud.services.organization.rest.api.ProjectRestApi.UPLOAD_FILE_PARAM_NAME;
+
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import io.swagger.annotations.ApiParam;
+import org.activiti.api.runtime.shared.security.SecurityManager;
 import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
-import org.activiti.cloud.organization.api.Project;
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelType;
+import org.activiti.cloud.organization.api.Project;
 import org.activiti.cloud.services.common.file.FileContent;
 import org.activiti.cloud.services.organization.rest.api.ModelRestApi;
 import org.activiti.cloud.services.organization.rest.assembler.ModelResourceAssembler;
@@ -47,12 +55,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.NotAcceptableStatusException;
 import org.springframework.web.server.ServerWebInputException;
 
-import static org.activiti.cloud.services.common.util.HttpUtils.multipartToFileContent;
-import static org.activiti.cloud.services.common.util.HttpUtils.writeFileToResponse;
-import static org.activiti.cloud.services.organization.rest.api.ProjectRestApi.EXPORT_AS_ATTACHMENT_PARAM_NAME;
-import static org.activiti.cloud.services.organization.rest.api.ProjectRestApi.UPLOAD_FILE_PARAM_NAME;
-import static org.activiti.cloud.services.organization.rest.controller.ProjectController.ATTACHMENT_API_PARAM_DESCR;
-
 /**
  * Controller for {@link Model} resources
  */
@@ -73,6 +75,8 @@ public class ModelController implements ModelRestApi {
     private final PagedModelTypeAssembler pagedModelTypeAssembler;
 
     private final ProjectController projectController;
+    
+    private final SecurityManager securityManager;
 
     public ModelController(ModelService modelService,
                            ModelTypeService modelTypeService,
@@ -80,7 +84,8 @@ public class ModelController implements ModelRestApi {
                            AlfrescoPagedResourcesAssembler<Model> pagedResourcesAssembler,
                            ModelTypeResourceAssembler modelTypeAssembler,
                            PagedModelTypeAssembler pagedModelTypeAssembler,
-                           ProjectController projectController) {
+                           ProjectController projectController,
+                           SecurityManager securityManager) {
         this.modelService = modelService;
         this.modelTypeService = modelTypeService;
         this.resourceAssembler = resourceAssembler;
@@ -88,6 +93,7 @@ public class ModelController implements ModelRestApi {
         this.modelTypeAssembler = modelTypeAssembler;
         this.pagedModelTypeAssembler = pagedModelTypeAssembler;
         this.projectController = projectController;
+        this.securityManager = securityManager;
     }
 
     @Override
@@ -220,9 +226,8 @@ public class ModelController implements ModelRestApi {
     }
 
     public Model findModelById(String modelId) {
-        Optional<Model> optionalModel = modelService.findModelById(modelId);
-        return optionalModel
-                .orElseThrow(() -> new ResourceNotFoundException("Model not found: " + modelId));
+        
+        return findModelWithCheckRights(modelId);
     }
 
     public ModelType findModelType(String type) {
@@ -230,4 +235,21 @@ public class ModelController implements ModelRestApi {
         return optionalModelType
                 .orElseThrow(() -> new ServerWebInputException("Unknown model type: " + type));
     }
+    
+    private Model findModelWithCheckRights(String modelId) {
+        String authenticatedUserId = securityManager.getAuthenticatedUserId();
+        
+        if (authenticatedUserId != null && !authenticatedUserId.isEmpty()) {
+            
+            Model model = modelService.findModelById(modelId)
+                              .orElseThrow(() -> new ResourceNotFoundException("Model not found: " + modelId));
+            
+            if (Objects.equals(model.getCreatedBy(), authenticatedUserId)) {
+                return model;
+            }
+
+        }
+        throw new IllegalStateException("You have no rights for the model: " + modelId);       
+    }
+    
 }

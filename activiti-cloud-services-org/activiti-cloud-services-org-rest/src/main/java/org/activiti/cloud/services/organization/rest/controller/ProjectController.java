@@ -16,11 +16,17 @@
 
 package org.activiti.cloud.services.organization.rest.controller;
 
+import static org.activiti.cloud.services.common.util.HttpUtils.writeFileToResponse;
+
 import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
-import io.swagger.annotations.ApiParam;
+import org.activiti.api.runtime.shared.security.SecurityManager;
 import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
 import org.activiti.cloud.organization.api.Project;
 import org.activiti.cloud.services.common.file.FileContent;
@@ -28,6 +34,8 @@ import org.activiti.cloud.services.organization.rest.api.ProjectRestApi;
 import org.activiti.cloud.services.organization.rest.assembler.ProjectResourceAssembler;
 import org.activiti.cloud.services.organization.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.hateoas.PagedResources;
@@ -37,8 +45,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import static org.activiti.cloud.services.common.util.HttpUtils.writeFileToResponse;
 
 /**
  * Controller for {@link Project} resources
@@ -51,14 +57,18 @@ public class ProjectController implements ProjectRestApi {
     private final ProjectResourceAssembler resourceAssembler;
 
     private final AlfrescoPagedResourcesAssembler<Project> pagedResourcesAssembler;
+    
+    private final SecurityManager securityManager;
 
     @Autowired
     public ProjectController(ProjectService projectService,
                              ProjectResourceAssembler resourceAssembler,
-                             AlfrescoPagedResourcesAssembler<Project> pagedResourcesAssembler) {
+                             AlfrescoPagedResourcesAssembler<Project> pagedResourcesAssembler,
+                             SecurityManager securityManager) {
         this.projectService = projectService;
         this.resourceAssembler = resourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
+        this.securityManager = securityManager;
     }
 
     @Override
@@ -69,7 +79,7 @@ public class ProjectController implements ProjectRestApi {
                     required = false) String name) {
         return pagedResourcesAssembler.toResource(
                 pageable,
-                projectService.getProjects(pageable,
+                getProjectsWithCheckRights(pageable,
                                            name),
                 resourceAssembler);
     }
@@ -124,7 +134,51 @@ public class ProjectController implements ProjectRestApi {
     }
 
     public Project findProjectById(String projectId) {
-        return projectService.findProjectById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
+        
+        return findProjectWithCheckRights(projectId);
     }
+    
+    private Project findProjectWithCheckRights(String projectId) {
+        String authenticatedUserId = securityManager.getAuthenticatedUserId();
+        
+        if (authenticatedUserId != null && !authenticatedUserId.isEmpty()) {
+            
+            //Maybe later we will need this check
+            //List<String> userGroups = securityManager.getAuthenticatedUserGroups();
+    
+            Project project = projectService.findProjectById(projectId)
+                              .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
+            
+            if (Objects.equals(project.getCreatedBy(), authenticatedUserId)) {
+                return project;
+            }
+
+        }
+        throw new IllegalStateException("You have no rights for the project: " + projectId);       
+    }
+    
+    private Page<Project> getProjectsWithCheckRights(Pageable pageable,
+                                               String name) {
+        
+        String authenticatedUserId = securityManager.getAuthenticatedUserId();
+        
+        if (authenticatedUserId != null && !authenticatedUserId.isEmpty()) {
+            
+            //To do: this should be done later in a proper way
+            List<Project> projects = projectService.getProjects(Pageable.unpaged(),
+                                                                name)
+                    .stream()
+                    .filter(project -> Objects.equals(project.getCreatedBy(), authenticatedUserId))
+                    .collect(Collectors.toList());
+                    
+            return new PageImpl<Project>(projects, 
+                                pageable, 
+                                projects.size());           
+                                                             
+        }
+        
+        throw new IllegalStateException("You have no rights for projects");    
+        
+    }
+ 
 }
