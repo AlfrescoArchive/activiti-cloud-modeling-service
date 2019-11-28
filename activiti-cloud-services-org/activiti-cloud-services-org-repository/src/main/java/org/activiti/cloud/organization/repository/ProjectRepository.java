@@ -30,6 +30,10 @@ public interface ProjectRepository<P extends Project> {
     Page<P> getProjects(Pageable pageable,
                         String nameToFilter);
     
+    Page<P> getProjects(Pageable pageable,
+                        String nameToFilter,
+                        String createdBy);
+    
     Optional<P> findProjectById(String projectId);
 
     P createProject(P project);

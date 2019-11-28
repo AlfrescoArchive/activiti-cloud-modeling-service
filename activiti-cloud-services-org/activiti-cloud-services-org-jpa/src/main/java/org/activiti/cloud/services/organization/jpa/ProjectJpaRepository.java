@@ -37,6 +37,13 @@ public interface ProjectJpaRepository extends JpaRepository<ProjectEntity, Strin
 
     Page<ProjectEntity> findAllByNameContaining(String name,
                                                 Pageable pageable);
+    
+    Page<ProjectEntity> findAllByCreatedBy(String createdBy,
+                                           Pageable pageable);
+    
+    Page<ProjectEntity> findAllByNameContainingAndCreatedBy(String name,
+                                                            String createdBy,
+                                                     Pageable pageable);
 
     @Override
     default Page<ProjectEntity> getProjects(Pageable pageable,
@@ -45,6 +52,30 @@ public interface ProjectJpaRepository extends JpaRepository<ProjectEntity, Strin
                 .map(name -> findAllByNameContaining(name,
                                                      pageable))
                 .orElseGet(() -> findAll(pageable));
+    }
+    
+    @Override
+    default Page<ProjectEntity> getProjects(Pageable pageable,
+                                            String nameToFilter,
+                                            String createdBy) {
+        
+        if (nameToFilter != null && createdBy != null) {
+            return findAllByNameContainingAndCreatedBy(nameToFilter,
+                                                       createdBy,
+                                                       pageable);
+        }
+        
+        if (nameToFilter != null) {
+            return findAllByNameContaining(nameToFilter,
+                                           pageable);
+        }  
+        
+        if (createdBy != null) {
+            return findAllByCreatedBy(createdBy,
+                                      pageable);
+        }  
+        
+        return findAll(pageable);
     }
 
     @Override

@@ -19,9 +19,7 @@ package org.activiti.cloud.services.organization.rest.controller;
 import static org.activiti.cloud.services.common.util.HttpUtils.writeFileToResponse;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -35,7 +33,6 @@ import org.activiti.cloud.services.organization.rest.assembler.ProjectResourceAs
 import org.activiti.cloud.services.organization.service.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.hateoas.PagedResources;
@@ -142,10 +139,7 @@ public class ProjectController implements ProjectRestApi {
         String authenticatedUserId = securityManager.getAuthenticatedUserId();
         
         if (authenticatedUserId != null && !authenticatedUserId.isEmpty()) {
-            
-            //Maybe later we will need this check
-            //List<String> userGroups = securityManager.getAuthenticatedUserGroups();
-    
+ 
             Project project = projectService.findProjectById(projectId)
                               .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
             
@@ -158,22 +152,15 @@ public class ProjectController implements ProjectRestApi {
     }
     
     private Page<Project> getProjectsWithCheckRights(Pageable pageable,
-                                               String name) {
+                                                     String name) {
         
         String authenticatedUserId = securityManager.getAuthenticatedUserId();
         
         if (authenticatedUserId != null && !authenticatedUserId.isEmpty()) {
             
-            //To do: this should be done later in a proper way
-            List<Project> projects = projectService.getProjects(Pageable.unpaged(),
-                                                                name)
-                    .stream()
-                    .filter(project -> Objects.equals(project.getCreatedBy(), authenticatedUserId))
-                    .collect(Collectors.toList());
-                    
-            return new PageImpl<Project>(projects, 
-                                pageable, 
-                                projects.size());           
+            return projectService.getProjects(pageable,
+                                              name,
+                                              authenticatedUserId);  
                                                              
         }
         

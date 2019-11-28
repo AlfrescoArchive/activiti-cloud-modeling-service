@@ -105,6 +105,20 @@ public class ProjectService {
   }
   
   /**
+   * Get a page of projects.
+   *
+   * @param pageable the pagination information
+   * @return the page
+   */
+  public Page<Project> getProjects(Pageable pageable,
+                                   String name,
+                                   String createdBy) {
+    return projectRepository.getProjects(pageable,
+      name,
+      createdBy);
+  }
+  
+  /**
    * Create an project.
    *
    * @param project the project to create
