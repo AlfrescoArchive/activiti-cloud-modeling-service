@@ -10,6 +10,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Retention;
 
+import org.activiti.cloud.services.common.security.keycloak.test.support.WithMockKeycloakUser;
+
 /**
  * Annotation for testing with mock modeler user
  */
