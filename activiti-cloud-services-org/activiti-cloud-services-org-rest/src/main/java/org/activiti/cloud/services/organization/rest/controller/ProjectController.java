@@ -123,6 +123,15 @@ public class ProjectController implements ProjectRestApi {
                             attachment);
     }
 
+    @Override
+    public void validateProject(
+            HttpServletResponse response,
+            @ApiParam(VALIDATE_PROJECT_ID_PARAM_DESCR)
+            @PathVariable String projectId) throws IOException {
+        Project project = findProjectById(projectId);
+        projectService.validateProject(project);
+    }
+
     public Project findProjectById(String projectId) {
         return projectService.findProjectById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
