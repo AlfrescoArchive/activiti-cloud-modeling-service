@@ -125,7 +125,6 @@ public class ProjectController implements ProjectRestApi {
 
     @Override
     public void validateProject(
-            HttpServletResponse response,
             @ApiParam(VALIDATE_PROJECT_ID_PARAM_DESCR)
             @PathVariable String projectId) throws IOException {
         Project project = findProjectById(projectId);

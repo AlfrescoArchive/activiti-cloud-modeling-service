@@ -170,7 +170,6 @@ public interface ProjectRestApi {
             value = "Validate an project by id")
     @GetMapping(path = "/projects/{projectId}/validate")
     void validateProject(
-            HttpServletResponse response,
             @ApiParam(VALIDATE_PROJECT_ID_PARAM_DESCR)
             @PathVariable String projectId) throws IOException;
 }
