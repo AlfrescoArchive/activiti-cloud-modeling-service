@@ -5,42 +5,46 @@
   "type": "object",
   "definitions": {
     "extensions": {
-      "type": "object",
-      "properties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["properties", "mappings", "constants"],
         "properties": {
-          "description": "The extensions properties",
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/properties"
-          }
-        },
-        "mappings": {
-          "type": "object",
-          "additionalProperties": {
+          "properties": {
+            "description": "The extensions properties",
             "type": "object",
-            "propertyNames": {
-              "type": "string",
-              "enum": [
-                "inputs",
-                "outputs"
-              ]
-            },
+            "additionalProperties": {
+              "$ref": "#/definitions/properties"
+            }
+          },
+          "mappings": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "enum": [
+                  "inputs",
+                  "outputs"
+                ]
+              },
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "$ref": "#/definitions/mappings"
+                }
+              }
+            }
+          },
+          "constants": {
+            "type": "object",
             "additionalProperties": {
               "type": "object",
               "additionalProperties": {
                 "type": "object",
-                "$ref": "#/definitions/mappings"
+                "$ref": "#/definitions/constants"
               }
-            }
-          }
-        },
-        "constants": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "$ref": "#/definitions/constants"
             }
           }
         }
