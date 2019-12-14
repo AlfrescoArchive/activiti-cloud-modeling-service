@@ -50,6 +50,10 @@ public interface ModelingProjectsService extends FeignRestDataClient<ModelingPro
     @Headers("Content-Type: application/json")
     Response exportProject();
 
+    @RequestLine("GET")
+    @Headers("Content-Type: application/json")
+    Response validateProject();
+
     @RequestLine("POST")
     @Headers("Content-Type: multipart/form-data")
     Resource<Model> importProjectModel(@Param("file") File file);
@@ -74,7 +78,7 @@ public interface ModelingProjectsService extends FeignRestDataClient<ModelingPro
                         new Decoder.Default())
                 .target(getType(),
                         uri)
-                .exportProject();
+                .validateProject();
     }
 
     default Resource<Model> importProjectModelByUri(String uri,
