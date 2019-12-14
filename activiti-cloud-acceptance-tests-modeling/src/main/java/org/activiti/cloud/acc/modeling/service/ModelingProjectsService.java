@@ -68,6 +68,15 @@ public interface ModelingProjectsService extends FeignRestDataClient<ModelingPro
                 .exportProject();
     }
 
+    default Response validateProjectByUri(String uri) {
+        return FeignRestDataClient
+                .builder(new FormEncoder(new JacksonEncoder()),
+                        new Decoder.Default())
+                .target(getType(),
+                        uri)
+                .exportProject();
+    }
+
     default Resource<Model> importProjectModelByUri(String uri,
                                                     File file) {
         return FeignRestDataClient
