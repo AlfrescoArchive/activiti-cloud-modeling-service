@@ -4,53 +4,15 @@
   "description": "Process extensions schema",
   "type": "object",
   "definitions": {
-    "extensions": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["properties", "mappings", "constants"],
-        "properties": {
-          "properties": {
-            "description": "The extensions properties",
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/definitions/properties"
-            }
-          },
-          "mappings": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "propertyNames": {
-                "type": "string",
-                "enum": [
-                  "inputs",
-                  "outputs"
-                ]
-              },
-              "additionalProperties": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object",
-                  "$ref": "#/definitions/mappings"
-                }
-              }
-            }
-          },
-          "constants": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "object",
-                "$ref": "#/definitions/constants"
-              }
-            }
-          }
+    "properties": {
+      "type": "object",
+      "patternProperties": {
+        ".*": {
+          "$ref": "#/definitions/property"
         }
       }
     },
-    "properties": {
+    "property": {
       "type": "object",
       "properties": {
         "id": {
@@ -105,7 +67,7 @@
             "properties": {
               "value": {
                 "type": "string",
-                "pattern": "^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][0-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$"
+                "pattern": "^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$"
               }
             }
           }
@@ -200,6 +162,47 @@
     },
     "mappings": {
       "type": "object",
+      "patternProperties": {
+        ".*": {
+          "$ref": "#/definitions/mapping-object"
+        }
+      }
+    },
+    "mapping-object": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/definitions/mapping-property"
+            }
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            ".*": {
+              "$ref": "#/definitions/mapping-property"
+            }
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "required": ["inputs"]
+        },
+        {
+          "required": ["outputs"]
+        }
+      ]
+    },
+    "mapping-property": {
+      "type": "object",
+      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -223,6 +226,24 @@
     },
     "constants": {
       "type": "object",
+      "patternProperties": {
+        ".*": {
+          "$ref": "#/definitions/constant-container"
+        }
+      }
+    },
+    "constant-container": {
+      "type": "object",
+      "patternProperties": {
+        ".*": {
+          "$ref": "#/definitions/constant-element"
+        }
+      }
+    },
+    "constant-element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value"],
       "properties": {
         "value": {
           "type": "string"
@@ -230,10 +251,10 @@
       }
     }
   },
-  "allOf": [{"$ref": "classpath://schema/model-extensions-schema.json"}],
-  "properties": {
-    "extensions": {
-      "$ref": "#/definitions/extensions"
-    }
-  }
+  "patternProperties": {
+    "properties": { "$ref": "#/definitions/properties" },
+    "mappings": { "$ref": "#/definitions/mappings" },
+    "constants": { "$ref": "#/definitions/constants" }
+  },
+  "additionalProperties": false
 }
