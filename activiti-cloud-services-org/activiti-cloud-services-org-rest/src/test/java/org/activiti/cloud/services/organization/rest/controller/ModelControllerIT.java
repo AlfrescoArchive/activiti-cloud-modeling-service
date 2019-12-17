@@ -744,7 +744,7 @@ public class ModelControllerIT {
                             ModelValidationError::getDescription)
                 .containsExactly(
                         tuple("expected type: String, found: Integer",
-                              "mismatch type dateVariable c297ec88-0ecf-4841-9b0f-2ae814957c68. expected type is date(mm/dd/yyyy)"),
+                              "mismatch type dateVariable c297ec88-0ecf-4841-9b0f-2ae814957c68. expected type is date"),
                         tuple("string [aloha] does not match pattern ^[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))$",
                               "invalid date dateVariable c297ec88-0ecf-4841-9b0f-2ae814957c68")
                 );
@@ -779,7 +779,7 @@ public class ModelControllerIT {
             .extracting(ModelValidationError::getProblem, ModelValidationError::getDescription)
             .containsExactlyInAnyOrder(
                 tuple("expected type: String, found: Integer",
-                        "mismatch type case4 e0740a3a-fec4-4ee5-bece-61f39df2a47k. expected type is datetime(mm/dd/yyyyTh:m:s)"),
+                        "mismatch type case4 e0740a3a-fec4-4ee5-bece-61f39df2a47k. expected type is datetime"),
                 tuple("string [2019-12-06T00:60:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][0-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$",
                     "invalid datetime case4 e0740a3a-fec4-4ee5-bece-61f39df2a47g"),
                 tuple("string [2019-12-06T00:00:60] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][0-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$",
