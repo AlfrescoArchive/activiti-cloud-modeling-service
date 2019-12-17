@@ -4,6 +4,15 @@
   "description": "Process extensions schema",
   "type": "object",
   "definitions": {
+    "extensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "properties": { "$ref": "#/definitions/properties" },
+        "mappings": { "$ref": "#/definitions/mappings" },
+        "constants": { "$ref": "#/definitions/constants" }
+      }
+    },
     "properties": {
       "type": "object",
       "patternProperties": {
@@ -252,9 +261,16 @@
     }
   },
   "patternProperties": {
-    "properties": { "$ref": "#/definitions/properties" },
-    "mappings": { "$ref": "#/definitions/mappings" },
-    "constants": { "$ref": "#/definitions/constants" }
+    "extensions": { "$ref": "#/definitions/extensions" },
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    }
   },
   "additionalProperties": false
 }

@@ -281,20 +281,24 @@ public class ModelValidationControllerIT {
                 .andDo(print());
         resultActions.andExpect(status().isBadRequest());
         assertThat(resultActions.andReturn().getResponse().getErrorMessage())
-                .isEqualTo("#: #: only 1 subschema matches out of 2");
+                .isEqualTo("#/extensions/mappings/ServiceTask_06crg3b: #: only 0 subschema matches out of 2");
 
         final Exception resolvedException = resultActions.andReturn().getResolvedException();
         assertThat(resolvedException).isInstanceOf(SemanticModelValidationException.class);
 
         SemanticModelValidationException semanticModelValidationException = (SemanticModelValidationException) resolvedException;
         assertThat(semanticModelValidationException.getValidationErrors())
-                .hasSize(2)
+                .hasSize(4)
                 .extracting(ModelValidationError::getProblem,
                             ModelValidationError::getDescription)
-                .containsOnly(tuple("inputds is not a valid enum value",
-                                    "#/extensions/mappings/ServiceTask_06crg3b/inputds: inputds is not a valid enum value"),
-                              tuple("outputss is not a valid enum value",
-                                    "#/extensions/mappings/ServiceTask_06crg3b/outputss: outputss is not a valid enum value"));
+            .containsOnly(tuple("extraneous key [inputds] is not permitted",
+                "#/extensions/mappings/ServiceTask_06crg3b: extraneous key [inputds] is not permitted"),
+                tuple("extraneous key [outputss] is not permitted",
+                    "#/extensions/mappings/ServiceTask_06crg3b: extraneous key [outputss] is not permitted"),
+                tuple("required key [inputs] not found",
+                    "#/extensions/mappings/ServiceTask_06crg3b: required key [inputs] not found"),
+                tuple("required key [outputs] not found",
+                    "#/extensions/mappings/ServiceTask_06crg3b: required key [outputs] not found"));
     }
 
     @Test
@@ -524,7 +528,7 @@ public class ModelValidationControllerIT {
                                 .file(file))
                 .andExpect(status().isNoContent());
     }
-    
+
     @Test
     public void should_throwExceptiojn_when_validatingProcessWithServiceTaskImplementationSetToUnknownConnectorAction() throws Exception {
         byte[] validContent = resourceAsByteArray("process/unknown-implementation-service-task.bpmn20.xml");
@@ -551,9 +555,9 @@ public class ModelValidationControllerIT {
                 .hasSize(1)
                 .extracting(ModelValidationError::getDescription,
                             ModelValidationError::getValidatorSetName)
-                .contains(tuple("Invalid service implementation on service 'ServiceTask_1qr4ad0'","BPMN service task validator"));    
+                .contains(tuple("Invalid service implementation on service 'ServiceTask_1qr4ad0'","BPMN service task validator"));
     }
-    
+
     @Test
     public void should_returnStatusNoContent_when_validatingProcessWithServiceTaskImplementationSetToDMNAction() throws Exception {
         byte[] validContent = resourceAsByteArray("process/dmn-implementation-service-task.bpmn20.xml");
@@ -573,7 +577,7 @@ public class ModelValidationControllerIT {
 
         resultActions.andExpect(status().isNoContent());
     }
-    
+
     @Test
     public void should_returnStatusNoContent_when_validatingProcessWithServiceTaskImplementationSetToScriptAction() throws Exception {
         byte[] validContent = resourceAsByteArray("process/script-implementation-service-task.bpmn20.xml");
@@ -593,8 +597,8 @@ public class ModelValidationControllerIT {
 
         resultActions.andExpect(status().isNoContent());
     }
-    
-    
-    
-    
+
+
+
+
 }

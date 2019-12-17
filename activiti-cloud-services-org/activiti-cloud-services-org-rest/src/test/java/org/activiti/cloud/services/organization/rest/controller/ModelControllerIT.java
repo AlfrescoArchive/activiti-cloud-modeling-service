@@ -575,20 +575,25 @@ public class ModelControllerIT {
                                    processModel.getId()).file(file))
                 .andDo(print());
         resultActions.andExpect(status().isBadRequest());
-        assertThat(resultActions.andReturn().getResponse().getErrorMessage()).isEqualTo("#: #: only 1 subschema matches out of 2");
+        assertThat(resultActions.andReturn().getResponse().getErrorMessage()).isEqualTo("#/extensions/mappings/ServiceTask_06crg3b: #: only 0 subschema matches out of 2");
 
         final Exception resolvedException = resultActions.andReturn().getResolvedException();
         assertThat(resolvedException).isInstanceOf(SemanticModelValidationException.class);
 
         SemanticModelValidationException semanticModelValidationException = (SemanticModelValidationException) resolvedException;
         assertThat(semanticModelValidationException.getValidationErrors())
-                .hasSize(2)
+                .hasSize(4)
                 .extracting(ModelValidationError::getProblem,
                             ModelValidationError::getDescription)
-                .containsOnly(tuple("inputds is not a valid enum value",
-                                    "#/extensions/mappings/ServiceTask_06crg3b/inputds: inputds is not a valid enum value"),
-                              tuple("outputss is not a valid enum value",
-                                    "#/extensions/mappings/ServiceTask_06crg3b/outputss: outputss is not a valid enum value"));
+                .containsOnly(tuple("extraneous key [inputds] is not permitted",
+                                    "#/extensions/mappings/ServiceTask_06crg3b: extraneous key [inputds] is not permitted"),
+                              tuple("extraneous key [outputss] is not permitted",
+                                    "#/extensions/mappings/ServiceTask_06crg3b: extraneous key [outputss] is not permitted"),
+                              tuple("required key [inputs] not found",
+                                    "#/extensions/mappings/ServiceTask_06crg3b: required key [inputs] not found"),
+                              tuple("required key [outputs] not found",
+                                    "#/extensions/mappings/ServiceTask_06crg3b: required key [outputs] not found")
+                    );
     }
 
     @Test
@@ -778,12 +783,18 @@ public class ModelControllerIT {
         assertThat(semanticModelValidationException.getValidationErrors())
             .extracting(ModelValidationError::getProblem, ModelValidationError::getDescription)
             .containsExactly(
-                tuple("string [2019-12-06T00:60:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][0-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$",
-                    "#/extensions/properties/e0740a3a-fec4-4ee5-bece-61f39df2a47g/value: string [2019-12-06T00:60:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][0-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$"),
-                tuple("string [2019-12-06T00:00:60] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][0-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$",
-                    "#/extensions/properties/e0740a3a-fec4-4ee5-bece-61f39df2a47f/value: string [2019-12-06T00:00:60] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][0-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$"),
-                tuple("string [2019-12-06T24:00:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][0-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$",
-                    "#/extensions/properties/e0740a3a-fec4-4ee5-bece-61f39df2a47e/value: string [2019-12-06T24:00:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][0-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$")
+                tuple("string [2019-12-06T00:60:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$",
+                    "#/extensions/properties/e0740a3a-fec4-4ee5-bece-61f39df2a47g/value: string [2019-12-06T00:60:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$"),
+                tuple("string [2019-12-06T00:00:60] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$",
+                    "#/extensions/properties/e0740a3a-fec4-4ee5-bece-61f39df2a47f/value: string [2019-12-06T00:00:60] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$"),
+                tuple("string [2019-12-06T24:00:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$",
+                    "#/extensions/properties/e0740a3a-fec4-4ee5-bece-61f39df2a47e/value: string [2019-12-06T24:00:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$"),
+                tuple("string [2019-12-06T00:05:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$",
+                    "#/extensions/properties/eba7ddad-930c-4ee3-ab77-9dcc3af5b267/value: string [2019-12-06T00:05:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$"),
+                tuple("string [2019-12-06T00:10:10] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$",
+                    "#/extensions/properties/60249b9b-ca13-452e-a363-f65a73235cd6/value: string [2019-12-06T00:10:10] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$"),
+                tuple("string [2019-12-06T00:00:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$",
+                    "#/extensions/properties/047f9acb-7dd8-41f6-b116-19431104a7c4/value: string [2019-12-06T00:00:00] does not match pattern ^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][1-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$")
             );
     }
 
