@@ -452,7 +452,7 @@ public class ModelValidationControllerIT {
                         tuple("expected type: String, found: Integer",
                               "Mismatch value type - dateVariable(c297ec88-0ecf-4841-9b0f-2ae814957c68). Expected type is date"),
                         tuple("string [aloha] does not match pattern ^[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))$",
-                              "Invalid date - dateVariable (c297ec88-0ecf-4841-9b0f-2ae814957c68)"));
+                              "Invalid date - dateVariable(c297ec88-0ecf-4841-9b0f-2ae814957c68)"));
     }
 
     @Test
