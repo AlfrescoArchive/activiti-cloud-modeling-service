@@ -114,42 +114,46 @@ public abstract class JsonSchemaModelValidator implements ModelValidator {
 
     private String resolveExpression(String message, String  pointerToViolation, JSONObject prcessExtenstionJson) {
         final String path[] = pointerToViolation.replace("#/", "").split("/");
-        int length = path.length - 1;
+        final int lastIndex = path.length - 1;
 
         if (message.contains("{{value}}")) {
-            path[length] = "value";
+            path[lastIndex] = "value";
             message = message.replace("{{value}}", getValueFromJson(path, prcessExtenstionJson));
         } else if (message.contains("{{type}}")) {
-            path[length] = "type";
+            path[lastIndex] = "type";
             message = message.replace("{{type}}", getValueFromJson(path, prcessExtenstionJson));
         } else if (message.contains("{{name}}")) {
-            path[length] = "name";
+            path[lastIndex] = "name";
             message = message.replace("{{name}}", getValueFromJson(path, prcessExtenstionJson));
         } else if (message.contains("{{id}}")) {
-            path[length] = "id";
+            path[lastIndex] = "id";
             message = message.replace("{{id}}", getValueFromJson(path, prcessExtenstionJson));
         }
 
-       if (message.contains( "{{name}}") || message.contains( "{{id}}") || message.contains( "{{type}}") || message.contains( "{{value}}"))
-           return resolveExpression(message, pointerToViolation, prcessExtenstionJson);
+        if (message.matches(".*\\{\\{(name|type|id|value)\\}\\}.*")) {
+            return resolveExpression(message, pointerToViolation, prcessExtenstionJson);
+        }
 
         return  message;
     }
 
     private String getValueFromJson(String[] path, JSONObject processExtensionJson) {
-        JSONObject parent = null; String value = "";
+        JSONObject parent = null;
+        String value = "";
 
         if(path.length > 1) {
             parent = processExtensionJson.getJSONObject(path[0]);
 
-            for(int iterator=1; iterator < path.length - 1; iterator++)
+            for(int iterator=1; iterator < path.length - 1; iterator++) {
                 parent = parent.getJSONObject(path[iterator]);
+            }
 
             value = parent.getString(path[path.length - 1]);
         }
 
-        if (path.length == 1)
+        if (path.length == 1) {
             value = processExtensionJson.getString(path[0]);
+        }
 
         return  value;
     }

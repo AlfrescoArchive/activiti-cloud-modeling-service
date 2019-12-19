@@ -86,8 +86,8 @@
                 "type": "string",
                 "pattern": "^[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))$",
                 "message": {
-                  "pattern": "invalid date {{name}} {{id}}",
-                  "type": "mismatch type {{name}} {{id}}. expected type is date"
+                  "pattern": "Invalid date - {{name}} ({{id}})",
+                  "type": "Mismatch value type - {{name}}({{id}}). Expected type is date"
                 }
               }
             }
@@ -107,8 +107,8 @@
                 "type": "string",
                 "pattern": "^((19|20)[0-9][0-9])[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])[T]([01][0-9]|[2][0-3])[:]([0-5][0-9])[:]([0-5][0-9])([+|-]([01][0-9]|[2][0-3])[:]([0-5][0-9])){0,1}$",
                 "message": {
-                  "pattern": "invalid datetime {{name}} {{id}}",
-                  "type": "mismatch type {{name}} {{id}}. expected type is datetime"
+                  "pattern": "Invalid datetime - {{name}} ({{id}})",
+                  "type": "Mismatch value type - {{name}}({{id}}). Expected type is datetime"
                 }
               }
             }
@@ -127,7 +127,7 @@
               "value": {
                 "type": "string",
                 "message": {
-                  "type": "mismatch type {{name}} {{id}}. expected type is string"
+                  "type": "Mismatch value type - {{name}}({{id}}). Expected type is string"
                 }
 
               }
@@ -147,7 +147,7 @@
               "value": {
                 "type": "integer",
                 "message": {
-                  "type": "mismatch type {{name}} {{id}}. expected type is integer"
+                  "type": "Mismatch value type - {{name}}({{id}}). Expected type is integer"
                 }
               }
             }
@@ -166,7 +166,7 @@
               "value": {
                 "type": "boolean",
                 "message": {
-                  "type": "mismatch type {{type}} - {{name}} {{id}}. expected type is boolean"
+                  "type": "Mismatch value type - {{name}}({{id}}). Expected type is boolean"
                 }
               }
             }
@@ -185,7 +185,7 @@
               "value": {
                 "type": "object",
                 "message": {
-                  "type": "mismatch type {{type}} - {{name}} {{id}}. expected type is json"
+                  "type": "Mismatch value type - {{name}}({{id}}). Expected type is json"
                 }
               }
             }
@@ -204,7 +204,7 @@
               "value": {
                 "type": "object",
                 "message": {
-                  "type": "value mismatch {{type}} - {{name}} {{id}}. expected type is file"
+                  "type": "Mismatch value type - {{name}}({{id}}). Expected type is file"
                 }
               }
             }

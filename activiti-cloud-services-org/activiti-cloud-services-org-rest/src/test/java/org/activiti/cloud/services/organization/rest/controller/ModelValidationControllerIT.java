@@ -325,7 +325,7 @@ public class ModelValidationControllerIT {
                 .extracting(ModelValidationError::getProblem,
                             ModelValidationError::getDescription)
                 .containsExactly(tuple("expected type: String, found: Integer",
-                                       "mismatch type stringVariable c297ec88-0ecf-4841-9b0f-2ae814957c68. expected type is string"));
+                                       "Mismatch value type - stringVariable(c297ec88-0ecf-4841-9b0f-2ae814957c68). Expected type is string"));
     }
 
     @Test
@@ -356,7 +356,7 @@ public class ModelValidationControllerIT {
                 .extracting(ModelValidationError::getProblem,
                             ModelValidationError::getDescription)
                 .containsExactly(tuple("expected type: Number, found: String",
-                                       "mismatch type integerVariable c297ec88-0ecf-4841-9b0f-2ae814957c68. expected type is integer"));
+                                       "Mismatch value type - integerVariable(c297ec88-0ecf-4841-9b0f-2ae814957c68). Expected type is integer"));
     }
 
     @Test
@@ -387,7 +387,7 @@ public class ModelValidationControllerIT {
                 .extracting(ModelValidationError::getProblem,
                             ModelValidationError::getDescription)
                 .containsExactly(tuple("expected type: Boolean, found: Integer",
-                                       "mismatch type boolean - booleanVariable c297ec88-0ecf-4841-9b0f-2ae814957c68. expected type is boolean"));
+                                       "Mismatch value type - booleanVariable(c297ec88-0ecf-4841-9b0f-2ae814957c68). Expected type is boolean"));
     }
 
     @Test
@@ -418,7 +418,7 @@ public class ModelValidationControllerIT {
                 .extracting(ModelValidationError::getProblem,
                             ModelValidationError::getDescription)
                 .containsExactly(tuple("expected type: JSONObject, found: Integer",
-                                       "mismatch type json - objectVariable c297ec88-0ecf-4841-9b0f-2ae814957c68. expected type is json"));
+                                       "Mismatch value type - objectVariable(c297ec88-0ecf-4841-9b0f-2ae814957c68). Expected type is json"));
     }
 
     @Test
@@ -450,10 +450,9 @@ public class ModelValidationControllerIT {
                             ModelValidationError::getDescription)
                 .containsExactly(
                         tuple("expected type: String, found: Integer",
-                              "mismatch type dateVariable c297ec88-0ecf-4841-9b0f-2ae814957c68. expected type is date"),
+                              "Mismatch value type - dateVariable(c297ec88-0ecf-4841-9b0f-2ae814957c68). Expected type is date"),
                         tuple("string [aloha] does not match pattern ^[0-9]{4}-(((0[13578]|(10|12))-(0[1-9]|[1-2][0-9]|3[0-1]))|(02-(0[1-9]|[1-2][0-9]))|((0[469]|11)-(0[1-9]|[1-2][0-9]|30)))$",
-                              "invalid date dateVariable c297ec88-0ecf-4841-9b0f-2ae814957c68")
-                );
+                              "Invalid date - dateVariable (c297ec88-0ecf-4841-9b0f-2ae814957c68)"));
     }
 
     @Test
