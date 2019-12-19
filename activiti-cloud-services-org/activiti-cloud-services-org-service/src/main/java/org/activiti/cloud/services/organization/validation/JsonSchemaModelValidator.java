@@ -116,13 +116,7 @@ public abstract class JsonSchemaModelValidator implements ModelValidator {
         final String path[] = pointerToViolation.replace("#/", "").split("/");
         final int lastIndex = path.length - 1;
 
-        if (message.contains("{{value}}")) {
-            path[lastIndex] = "value";
-            message = message.replace("{{value}}", getValueFromJson(path, prcessExtenstionJson));
-        } else if (message.contains("{{type}}")) {
-            path[lastIndex] = "type";
-            message = message.replace("{{type}}", getValueFromJson(path, prcessExtenstionJson));
-        } else if (message.contains("{{name}}")) {
+        if (message.contains("{{name}}")) {
             path[lastIndex] = "name";
             message = message.replace("{{name}}", getValueFromJson(path, prcessExtenstionJson));
         } else if (message.contains("{{id}}")) {
@@ -130,7 +124,7 @@ public abstract class JsonSchemaModelValidator implements ModelValidator {
             message = message.replace("{{id}}", getValueFromJson(path, prcessExtenstionJson));
         }
 
-        if (message.matches(".*\\{\\{(name|type|id|value)\\}\\}.*")) {
+        if (message.matches(".*\\{\\{(name|id)\\}\\}.*")) {
             return resolveExpression(message, pointerToViolation, prcessExtenstionJson);
         }
 
