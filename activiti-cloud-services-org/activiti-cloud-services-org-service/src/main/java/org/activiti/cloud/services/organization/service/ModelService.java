@@ -27,9 +27,11 @@ import static org.activiti.cloud.services.common.util.ContentTypeUtils.toJsonFil
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +39,11 @@ import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
+import javax.xml.stream.XMLStreamException;
 import org.activiti.bpmn.exceptions.XMLException;
+import org.activiti.bpmn.model.BpmnModel;
+import org.activiti.bpmn.model.Process;
+import org.activiti.bpmn.model.Task;
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelContent;
 import org.activiti.cloud.organization.api.ModelType;
@@ -50,6 +56,7 @@ import org.activiti.cloud.organization.core.error.UnknownModelTypeException;
 import org.activiti.cloud.organization.repository.ModelRepository;
 import org.activiti.cloud.services.common.file.FileContent;
 import org.activiti.cloud.services.common.util.ContentTypeUtils;
+import org.activiti.cloud.services.organization.converter.ProcessModelContentConverter;
 import org.activiti.cloud.services.organization.validation.ProjectValidationContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,19 +84,24 @@ public class ModelService {
 
     private final JsonConverter<Model> jsonConverter;
 
+    private final ProcessModelContentConverter processModelContentConverter;
+
     private final HashMap<String, String> modelIdentifiers = new HashMap();
+
 
     @Autowired
     public ModelService(ModelRepository modelRepository,
-                        ModelTypeService modelTypeService,
-                        ModelContentService modelContentService,
-                        ModelExtensionsService modelExtensionsService,
-                        JsonConverter<Model> jsonConverter) {
+            ModelTypeService modelTypeService,
+            ModelContentService modelContentService,
+            ModelExtensionsService modelExtensionsService,
+            JsonConverter<Model> jsonConverter,
+            ProcessModelContentConverter processModelContentConverter) {
         this.modelRepository = modelRepository;
         this.modelTypeService = modelTypeService;
         this.modelContentService = modelContentService;
         this.jsonConverter = jsonConverter;
         this.modelExtensionsService = modelExtensionsService;
+        this.processModelContentConverter = processModelContentConverter;
     }
 
     public List<Model> getAllModels(Project project) {
@@ -290,6 +302,33 @@ public class ModelService {
                                              model.getId()));
         }
         return model;
+    }
+
+    public <T extends Task> List<T> getTasksBy(Project project, ModelType processModelType, Class<T> clazz) {
+        return getProcessesBy(project, processModelType)
+                .stream()
+                .map(Process::getFlowElements)
+                .flatMap(Collection::stream)
+                .filter(obj -> clazz.isInstance(obj))
+                .map(clazz::cast)
+                .collect(Collectors.toList());
+    }
+
+    public final List<Process> getProcessesBy(Project project, ModelType type) {
+        return this.getModels(project, type, Pageable.unpaged())
+                .stream()
+                .map(this::safeGetBpmnModel)
+                .map(BpmnModel::getProcesses)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+    }
+
+    private BpmnModel safeGetBpmnModel(Model model) {
+        try {
+            return processModelContentConverter.convertToBpmnModel(model.getContent());
+        } catch (IOException | XMLStreamException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String retrieveModelIdFromModelContent(Model model,
