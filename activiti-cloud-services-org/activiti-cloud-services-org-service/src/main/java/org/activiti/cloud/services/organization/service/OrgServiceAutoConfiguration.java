@@ -14,6 +14,7 @@ import org.activiti.cloud.organization.api.Project;
 import org.activiti.cloud.organization.converter.JsonConverter;
 import org.activiti.cloud.organization.repository.ModelRepository;
 import org.activiti.cloud.organization.repository.ProjectRepository;
+import org.activiti.cloud.services.organization.converter.ProcessModelContentConverter;
 import org.activiti.cloud.services.organization.service.api.ProjectService;
 import org.activiti.cloud.services.organization.validation.extensions.ExtensionsModelValidator;
 import org.activiti.cloud.services.organization.validation.project.ProjectValidator;
@@ -55,12 +56,14 @@ public class OrgServiceAutoConfiguration {
                                      ModelTypeService modelTypeService,
                                      ModelContentService modelContentService,
                                      ModelExtensionsService modelExtensionsService,
-                                     JsonConverter<Model> jsonConverter) {
+                                     JsonConverter<Model> jsonConverter,
+                                     ProcessModelContentConverter processModelContentConverter) {
         return new ModelService(modelRepository,
                                 modelTypeService,
                                 modelContentService,
                                 modelExtensionsService,
-                                jsonConverter);
+                                jsonConverter,
+                                processModelContentConverter);
 
     }
 
