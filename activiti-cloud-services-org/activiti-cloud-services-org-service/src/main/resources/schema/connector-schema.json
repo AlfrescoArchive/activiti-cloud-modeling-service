@@ -33,27 +33,7 @@
         "required": [ "id", "name", "type" ]
       }
     },
-    "connector-action": {
-      "type": "object",
-      "additionalProperties" : false,
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1
-        },
-        "name": {
-          "type": "string",
-          "minLength": 1
-        },
-        "description": {
-          "type": "string"
-        },
-        "inputs": { "$ref": "#/definitions/connector-parameters" },
-        "outputs": { "$ref": "#/definitions/connector-parameters" }
-      },
-      "required": [ "id", "name" ]
-    },
-    "connector-event": {
+    "connector-feature": {
       "type": "object",
       "additionalProperties" : false,
       "properties": {
@@ -97,12 +77,12 @@
     },
     "actions" : {
       "type": "object",
-      "additionalProperties": { "$ref": "#/definitions/connector-action" },
+      "additionalProperties": { "$ref": "#/definitions/connector-feature" },
       "default": {}
     },
     "events" : {
       "type": "object",
-      "additionalProperties": { "$ref": "#/definitions/connector-event" },
+      "additionalProperties": { "$ref": "#/definitions/connector-feature" },
       "default": {}
     }
   },
