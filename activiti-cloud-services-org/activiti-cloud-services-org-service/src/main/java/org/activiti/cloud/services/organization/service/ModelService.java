@@ -63,7 +63,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.Assert;
 
 /**
  * Business logic related to {@link Model} entities including process models, form models, connectors, data models and decision table models.
@@ -304,12 +306,13 @@ public class ModelService {
         return model;
     }
 
-    public <T extends Task> List<T> getTasksBy(Project project, ModelType processModelType, Class<T> clazz) {
+    public <T extends Task> List<T> getTasksBy(Project project, ModelType processModelType, @NonNull Class<T> clazz) {
+        Assert.notNull(clazz, "Class task type it must not be null");
         return getProcessesBy(project, processModelType)
                 .stream()
                 .map(Process::getFlowElements)
                 .flatMap(Collection::stream)
-                .filter(obj -> clazz.isInstance(obj))
+                .filter(clazz::isInstance)
                 .map(clazz::cast)
                 .collect(Collectors.toList());
     }
