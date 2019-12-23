@@ -77,12 +77,14 @@ public class OrgServiceAutoConfiguration {
                                          ModelService modelService,
                                          ModelTypeService modelTypeService,
                                          JsonConverter<Project> jsonConverter,
+                                         JsonConverter<ProjectDescriptor> projectDescriptorJsonConverter,
                                          JsonConverter<Map> jsonMetadataConverter,
                                          Set<ProjectValidator> projectValidators) {
 
         return new ProjectServiceImpl(projectRepository,
                                   modelService,
                                   modelTypeService,
+                                  projectDescriptorJsonConverter,
                                   jsonConverter,
                                   jsonMetadataConverter,
                                   projectValidators);

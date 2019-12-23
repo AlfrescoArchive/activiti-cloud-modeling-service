@@ -16,6 +16,7 @@
 
 package org.activiti.cloud.services.organization.service;
 
+import static java.util.Objects.nonNull;
 import static org.activiti.cloud.organization.api.ProcessModelType.PROCESS;
 import static org.activiti.cloud.organization.api.ValidationContext.EMPTY_CONTEXT;
 import static org.activiti.cloud.services.common.util.ContentTypeUtils.CONTENT_TYPE_JSON;
@@ -35,10 +36,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.transaction.Transactional;
-
 import javax.xml.stream.XMLStreamException;
 import org.activiti.bpmn.exceptions.XMLException;
 import org.activiti.bpmn.model.BpmnModel;
@@ -317,9 +317,10 @@ public class ModelService {
                 .collect(Collectors.toList());
     }
 
-    public final List<Process> getProcessesBy(Project project, ModelType type) {
+    public List<Process> getProcessesBy(Project project, ModelType type) {
         return this.getModels(project, type, Pageable.unpaged())
                 .stream()
+                .filter(model -> nonNull(model.getContent()))
                 .map(this::safeGetBpmnModel)
                 .map(BpmnModel::getProcesses)
                 .flatMap(List::stream)
@@ -447,5 +448,24 @@ public class ModelService {
     private ModelType findModelType(Model model) {
         return Optional.ofNullable(model.getType()).flatMap(modelTypeService::findModelTypeByName)
                 .orElseThrow(() -> new UnknownModelTypeException("Unknown model type: " + model.getType()));
+    }
+
+    public static class ProjectAccessControl {
+
+        private final Set<String> users;
+        private final Set<String> groups;
+
+        public ProjectAccessControl(Set<String> users, Set<String> groups) {
+            this.users = users;
+            this.groups = groups;
+        }
+
+        public Set<String> getGroups() {
+            return groups;
+        }
+
+        public Set<String> getUsers() {
+            return users;
+        }
     }
 }
