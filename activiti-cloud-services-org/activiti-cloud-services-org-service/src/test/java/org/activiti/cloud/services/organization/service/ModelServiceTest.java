@@ -4,6 +4,9 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -61,18 +64,25 @@ public class ModelServiceTest {
         ProcessModelType modelType = new ProcessModelType();
         UserTask userTaskOne = new UserTask();
         UserTask userTaskTwo = new UserTask();
+        UserTask userTaskThree = new UserTask();
         PageImpl page = new PageImpl(asList(modelOne));
         Process processOne = initProcess(userTaskOne, flowElementOne, userTaskTwo);
+        Process processTwo = initProcess(userTaskThree);
 
+        when(modelOne.getContent()).thenReturn("".getBytes());
         when(modelRepository.getModels(any(), any(), any())).thenReturn(page);
         when(processModelContentConverter.convertToBpmnModel(any())).thenReturn(bpmnModelOne);
-        when(bpmnModelOne.getProcesses()).thenReturn(asList(processOne));
+        when(bpmnModelOne.getProcesses()).thenReturn(asList(processOne, processTwo));
 
-        List<UserTask> tasks = modelService.getTasksBy(projectOne, modelType, UserTask.class);
+        List<UserTask> tasks = modelService.getTasksBy(project, modelType, UserTask.class);
 
-        assertThat(tasks).hasSize(2);
+        assertThat(tasks).hasSize(3);
         assertThat(tasks).contains(userTaskOne);
         assertThat(tasks).contains(userTaskTwo);
+        assertThat(tasks).contains(userTaskThree);
+
+        verify(processOne, times(1)).getFlowElements();
+        verify(processTwo, times(1)).getFlowElements();
     }
 
     @Test
@@ -90,7 +100,8 @@ public class ModelServiceTest {
         Page page = new PageImpl(asList(modelOne));
         Process processOne = new Process();
 
-        when(modelRepository.getModels(any(), any(), any())).thenReturn(page);
+        when(modelOne.getContent()).thenReturn("".getBytes());
+        when(modelService.getModels(any(), any(), any())).thenReturn(page);
         when(processModelContentConverter.convertToBpmnModel(any())).thenReturn(bpmnModelOne);
         when(bpmnModelOne.getProcesses()).thenReturn(asList(processOne));
 
@@ -98,14 +109,14 @@ public class ModelServiceTest {
 
         assertThat(processes).hasSize(1);
         assertThat(processes).contains(processOne);
+
+        verify(bpmnModelOne, times(1)).getProcesses();
     }
 
     private Process initProcess(FlowElement... elements) {
-        Process process = new Process();
-        Map<String, FlowElement> flowElements = new HashMap<>();
+        Process process = spy(new Process());
         Arrays.asList(elements)
                 .forEach(process::addFlowElement);
-        process.setFlowElementMap(flowElements);
         return process;
     }
 }

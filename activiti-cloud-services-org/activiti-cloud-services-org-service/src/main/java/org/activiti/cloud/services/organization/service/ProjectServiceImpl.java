@@ -28,9 +28,11 @@ import java.util.stream.Stream;
 
 import javax.transaction.Transactional;
 
+import org.activiti.bpmn.model.UserTask;
 import org.activiti.cloud.organization.api.Model;
 import org.activiti.cloud.organization.api.ModelType;
 import org.activiti.cloud.organization.api.ModelValidationError;
+import org.activiti.cloud.organization.api.ProcessModelType;
 import org.activiti.cloud.organization.api.Project;
 import org.activiti.cloud.organization.api.ValidationContext;
 import org.activiti.cloud.organization.converter.JsonConverter;
@@ -40,6 +42,7 @@ import org.activiti.cloud.organization.repository.ProjectRepository;
 import org.activiti.cloud.services.common.file.FileContent;
 import org.activiti.cloud.services.common.zip.ZipBuilder;
 import org.activiti.cloud.services.common.zip.ZipStream;
+import org.activiti.cloud.services.organization.service.ModelService.ProjectAccessControl;
 import org.activiti.cloud.services.organization.service.api.ProjectService;
 import org.activiti.cloud.services.organization.validation.ProjectValidationContext;
 import org.activiti.cloud.services.organization.validation.project.ProjectValidator;
@@ -64,6 +67,8 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ModelTypeService modelTypeService;
 
+    private final JsonConverter<ProjectDescriptor> descriptorJsonConverter;
+
     private final JsonConverter<Project> jsonConverter;
 
     private final JsonConverter<Map> jsonMetadataConverter;
@@ -74,12 +79,14 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectServiceImpl(ProjectRepository projectRepository,
                               ModelService modelService,
                               ModelTypeService modelTypeService,
+                              JsonConverter<ProjectDescriptor> descriptorJsonConverter,
                               JsonConverter<Project> jsonConverter,
                               JsonConverter<Map> jsonMetadataConverter,
                               Set<ProjectValidator> projectValidators) {
         this.projectRepository = projectRepository;
         this.modelService = modelService;
         this.modelTypeService = modelTypeService;
+        this.descriptorJsonConverter = descriptorJsonConverter;
         this.jsonConverter = jsonConverter;
         this.projectValidators = projectValidators;
         this.jsonMetadataConverter = jsonMetadataConverter;
@@ -158,8 +165,10 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public FileContent exportProject(Project project) throws IOException {
 
+        ProjectDescriptor projectDescriptor = buildDescriptor(project);
+
         ZipBuilder zipBuilder = new ZipBuilder(project.getName())
-                .appendFile(jsonConverter.convertToJsonBytes(project), toJsonFilename(project.getName()));
+                .appendFile(descriptorJsonConverter.convertToJsonBytes(projectDescriptor), toJsonFilename(project.getName()));
 
         modelService.getAllModels(project).forEach(model -> modelTypeService.findModelTypeByName(model.getType()).map(ModelType::getFolderName).ifPresent(folderName -> {
             zipBuilder.appendFolder(folderName)
@@ -168,6 +177,29 @@ public class ProjectServiceImpl implements ProjectService {
                     .map(extensionFileContent -> zipBuilder.appendFile(extensionFileContent, folderName));
         }));
         return zipBuilder.toZipFileContent();
+    }
+
+    @Override
+    public ProjectAccessControl getProjectAccessControl(Project project){
+        Set<String> users = new HashSet<>();
+        Set<String> groups = new HashSet<>();
+
+        modelService.getTasksBy(project, new ProcessModelType(), UserTask.class)
+                .forEach(userTask -> {
+                    users.add(userTask.getAssignee());
+                    users.addAll(userTask.getCandidateUsers());
+                    groups.addAll(userTask.getCandidateGroups());
+                });
+
+        return new ProjectAccessControl(users, groups);
+    }
+
+    private ProjectDescriptor buildDescriptor(Project project) {
+        ProjectDescriptor projectDescriptor = new ProjectDescriptor(project);
+        ProjectAccessControl accessControl = this.getProjectAccessControl(project);
+        projectDescriptor.setUsers(accessControl.getUsers());
+        projectDescriptor.setGroups(accessControl.getGroups());
+        return projectDescriptor;
     }
 
     private Optional<FileContent> createFileContentFromZipEntry(ZipStream.ZipStreamEntry zipEntry) {
