@@ -186,12 +186,26 @@ public class ProjectServiceImpl implements ProjectService {
 
         modelService.getTasksBy(project, new ProcessModelType(), UserTask.class)
                 .forEach(userTask -> {
-                    users.add(userTask.getAssignee());
-                    users.addAll(userTask.getCandidateUsers());
-                    groups.addAll(userTask.getCandidateGroups());
+                    extractUsers(users, userTask);
+                    extractGroups(groups, userTask);
                 });
 
         return new ProjectAccessControl(users, groups);
+    }
+
+    private void extractGroups(Set<String> groups, UserTask userTask) {
+        if(userTask.getCandidateGroups() != null){
+            groups.addAll(userTask.getCandidateGroups());
+        }
+    }
+
+    private void extractUsers(Set<String> users, UserTask userTask) {
+        if(userTask.getAssignee() != null){
+            users.add(userTask.getAssignee());
+        }
+        if(userTask.getCandidateUsers() != null){
+            users.addAll(userTask.getCandidateUsers());
+        }
     }
 
     private ProjectDescriptor buildDescriptor(Project project) {
