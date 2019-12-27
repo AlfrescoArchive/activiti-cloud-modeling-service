@@ -11,9 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.bpmn.model.FlowElement;
