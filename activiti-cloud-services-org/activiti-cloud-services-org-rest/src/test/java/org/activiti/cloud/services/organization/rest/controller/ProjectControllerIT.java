@@ -175,7 +175,7 @@ public class ProjectControllerIT {
         projectRepository.createProject(project("project-main-2"));
         projectRepository.createProject(project("project-secondary-2"));
 
-        mockMvc.perform(get("{version}/projects?name=MAIN", 
+        mockMvc.perform(get("{version}/projects?name=MAIN",
                 RepositoryRestConfig.API_VERSION))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -359,6 +359,20 @@ public class ProjectControllerIT {
                 .hasJsonContentSatisfying("project-with-models.json",
                                           jsonContent -> jsonContent
                                                   .node("name").isEqualTo("project-with-models"))
+                .hasJsonContentSatisfying("project-with-models.json",
+                        jsonContent -> jsonContent
+                                .node("users")
+                                .isArray()
+                                .ofLength(2)
+                                .thatContains("userOne")
+                                .thatContains("userTwo"))
+                .hasJsonContentSatisfying("project-with-models.json",
+                        jsonContent -> jsonContent
+                                .node("groups")
+                                .isArray()
+                                .ofLength(2)
+                                .thatContains("hr")
+                                .thatContains("testgroup"))
                 .hasJsonContentSatisfying("processes/process-model-extensions.json",
                                           jsonContent -> jsonContent
                                                   .node("name").isEqualTo("process-model")
@@ -819,7 +833,7 @@ public class ProjectControllerIT {
                 .andDo(print()).andExpect(status().isCreated()).andExpect(jsonPath("$.entry.name",
                                                                                    is("application-xy")));
     }
-    
+
     @Test
     public void should_returnStatusOK_when_exportingProjectWithProcessExtensionsWithValueOutputProcessVariableMapping() throws Exception {
         ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("invalid-project"));
