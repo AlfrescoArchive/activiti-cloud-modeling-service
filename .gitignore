@@ -40,3 +40,4 @@ hs_err_pid*
 *.versionsBackup
 
 .sts4-cache
+.editorconfig
