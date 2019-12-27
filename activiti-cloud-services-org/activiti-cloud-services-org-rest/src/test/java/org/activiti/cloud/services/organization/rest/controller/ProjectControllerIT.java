@@ -833,7 +833,7 @@ public class ProjectControllerIT {
                 .andDo(print()).andExpect(status().isCreated()).andExpect(jsonPath("$.entry.name",
                                                                                    is("application-xy")));
     }
-    
+
     @Test
     public void should_returnStatusOK_when_exportingProjectWithProcessExtensionsWithValueOutputProcessVariableMapping() throws Exception {
         ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("invalid-project"));
