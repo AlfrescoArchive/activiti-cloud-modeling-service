@@ -56,7 +56,7 @@ import org.activiti.cloud.modeling.core.error.UnknownModelTypeException;
 import org.activiti.cloud.modeling.repository.ModelRepository;
 import org.activiti.cloud.services.common.file.FileContent;
 import org.activiti.cloud.services.common.util.ContentTypeUtils;
-import org.activiti.cloud.services.modeling.validation.ProcessModelContentConverter;
+import org.activiti.cloud.services.modeling.converter.ProcessModelContentConverter;
 import org.activiti.cloud.services.modeling.validation.ProjectValidationContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,8 +95,8 @@ public class ModelService {
                         ModelTypeService modelTypeService,
                         ModelContentService modelContentService,
                         ModelExtensionsService modelExtensionsService,
-                        JsonConverter<Model> jsonConverter
-                        ProcessModelContentConverter processModelContentConverter) {) {
+                        JsonConverter<Model> jsonConverter,
+                        ProcessModelContentConverter processModelContentConverter) {
         this.modelRepository = modelRepository;
         this.modelTypeService = modelTypeService;
         this.modelContentService = modelContentService;
@@ -449,7 +449,7 @@ public class ModelService {
                 .orElseThrow(() -> new UnknownModelTypeException("Unknown model type: " + model.getType()));
     }
 
-    public static class ProjectAccessControl {
+    public static class ProjectAccessControl  {
 
         private final Set<String> users;
         private final Set<String> groups;

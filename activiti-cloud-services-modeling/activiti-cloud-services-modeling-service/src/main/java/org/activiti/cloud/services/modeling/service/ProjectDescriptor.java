@@ -1,8 +1,9 @@
 package org.activiti.cloud.services.modeling.service;
 
+import org.activiti.cloud.modeling.api.Project;
+
 import java.util.Date;
 import java.util.Set;
-import org.activiti.cloud.organization.api.Project;
 
 public class ProjectDescriptor {
 

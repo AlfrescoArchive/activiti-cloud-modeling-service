@@ -28,17 +28,15 @@ import java.util.stream.Stream;
 
 import javax.transaction.Transactional;
 
-import org.activiti.cloud.modeling.api.Model;
-import org.activiti.cloud.modeling.api.ModelType;
-import org.activiti.cloud.modeling.api.ModelValidationError;
-import org.activiti.cloud.modeling.api.Project;
-import org.activiti.cloud.modeling.api.ValidationContext;
+import org.activiti.bpmn.model.UserTask;
+import org.activiti.cloud.modeling.api.*;
 import org.activiti.cloud.modeling.converter.JsonConverter;
 import org.activiti.cloud.modeling.core.error.ImportProjectException;
 import org.activiti.cloud.modeling.core.error.SemanticModelValidationException;
 import org.activiti.cloud.modeling.repository.ProjectRepository;
 import org.activiti.cloud.services.common.file.FileContent;
 import org.activiti.cloud.services.common.zip.ZipBuilder;
+import org.activiti.cloud.services.modeling.service.ModelService.ProjectAccessControl;
 import org.activiti.cloud.services.common.zip.ZipStream;
 import org.activiti.cloud.services.modeling.service.api.ProjectService;
 import org.activiti.cloud.services.modeling.validation.ProjectValidationContext;
