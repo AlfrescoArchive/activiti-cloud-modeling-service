@@ -64,6 +64,8 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ModelTypeService modelTypeService;
 
+    private final JsonConverter<ProjectDescriptor> descriptorJsonConverter;
+
     private final JsonConverter<Project> jsonConverter;
 
     private final JsonConverter<Map> jsonMetadataConverter;
@@ -74,12 +76,14 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectServiceImpl(ProjectRepository projectRepository,
                               ModelService modelService,
                               ModelTypeService modelTypeService,
+                              JsonConverter<ProjectDescriptor> descriptorJsonConverter,
                               JsonConverter<Project> jsonConverter,
                               JsonConverter<Map> jsonMetadataConverter,
                               Set<ProjectValidator> projectValidators) {
         this.projectRepository = projectRepository;
         this.modelService = modelService;
         this.modelTypeService = modelTypeService;
+        this.descriptorJsonConverter = descriptorJsonConverter;
         this.jsonConverter = jsonConverter;
         this.projectValidators = projectValidators;
         this.jsonMetadataConverter = jsonMetadataConverter;
@@ -158,8 +162,10 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public FileContent exportProject(Project project) throws IOException {
 
+        ProjectDescriptor projectDescriptor = buildDescriptor(project);
+
         ZipBuilder zipBuilder = new ZipBuilder(project.getName())
-                .appendFile(jsonConverter.convertToJsonBytes(project), toJsonFilename(project.getName()));
+                .appendFile(descriptorJsonConverter.convertToJsonBytes(projectDescriptor), toJsonFilename(project.getName()));
 
         modelService.getAllModels(project).forEach(model -> modelTypeService.findModelTypeByName(model.getType()).map(ModelType::getFolderName).ifPresent(folderName -> {
             zipBuilder.appendFolder(folderName)
@@ -168,6 +174,43 @@ public class ProjectServiceImpl implements ProjectService {
                     .map(extensionFileContent -> zipBuilder.appendFile(extensionFileContent, folderName));
         }));
         return zipBuilder.toZipFileContent();
+    }
+
+    @Override
+    public ProjectAccessControl getProjectAccessControl(Project project){
+        Set<String> users = new HashSet<>();
+        Set<String> groups = new HashSet<>();
+
+        modelService.getTasksBy(project, new ProcessModelType(), UserTask.class)
+                .forEach(userTask -> {
+                    extractUsers(users, userTask);
+                    extractGroups(groups, userTask);
+                });
+
+        return new ProjectAccessControl(users, groups);
+    }
+
+    private void extractGroups(Set<String> groups, UserTask userTask) {
+        if(userTask.getCandidateGroups() != null){
+            groups.addAll(userTask.getCandidateGroups());
+        }
+    }
+
+    private void extractUsers(Set<String> users, UserTask userTask) {
+        if(userTask.getAssignee() != null){
+            users.add(userTask.getAssignee());
+        }
+        if(userTask.getCandidateUsers() != null){
+            users.addAll(userTask.getCandidateUsers());
+        }
+    }
+
+    private ProjectDescriptor buildDescriptor(Project project) {
+        ProjectDescriptor projectDescriptor = new ProjectDescriptor(project);
+        ProjectAccessControl accessControl = this.getProjectAccessControl(project);
+        projectDescriptor.setUsers(accessControl.getUsers());
+        projectDescriptor.setGroups(accessControl.getGroups());
+        return projectDescriptor;
     }
 
     private Optional<FileContent> createFileContentFromZipEntry(ZipStream.ZipStreamEntry zipEntry) {
