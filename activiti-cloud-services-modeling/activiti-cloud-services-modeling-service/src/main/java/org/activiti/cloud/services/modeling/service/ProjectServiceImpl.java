@@ -16,18 +16,6 @@
 
 package org.activiti.cloud.services.modeling.service;
 
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.JSON;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.getContentTypeByPath;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.removeExtension;
-import static org.activiti.cloud.services.common.util.ContentTypeUtils.toJsonFilename;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.transaction.Transactional;
-
 import org.activiti.bpmn.model.UserTask;
 import org.activiti.cloud.modeling.api.*;
 import org.activiti.cloud.modeling.converter.JsonConverter;
@@ -36,8 +24,8 @@ import org.activiti.cloud.modeling.core.error.SemanticModelValidationException;
 import org.activiti.cloud.modeling.repository.ProjectRepository;
 import org.activiti.cloud.services.common.file.FileContent;
 import org.activiti.cloud.services.common.zip.ZipBuilder;
-import org.activiti.cloud.services.modeling.service.ModelService.ProjectAccessControl;
 import org.activiti.cloud.services.common.zip.ZipStream;
+import org.activiti.cloud.services.modeling.service.ModelService.ProjectAccessControl;
 import org.activiti.cloud.services.modeling.service.api.ProjectService;
 import org.activiti.cloud.services.modeling.validation.ProjectValidationContext;
 import org.activiti.cloud.services.modeling.validation.project.ProjectValidator;
@@ -48,6 +36,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.transaction.Transactional;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.activiti.cloud.services.common.util.ContentTypeUtils.*;
 
 /**
  * Business logic related to {@link Project} entities
