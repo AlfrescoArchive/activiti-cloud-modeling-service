@@ -22,25 +22,26 @@ import org.springframework.lang.NonNull;
 public interface ModelService {
 
     List<Model> getAllModels(Project project);
-    
+
     Page<Model> getModels(Project project,
                           ModelType modelType,
                           Pageable pageable);
 
     Model buildModel(String type,
-                            String name);
+                     String name);
 
     Model createModel(Project project,
-                             Model model);
+                      Model model);
 
     Model updateModel(Model modelToBeUpdated,
-                             Model newModel);
+                      Model newModel);
 
     void deleteModel(Model model);
 
     Optional<Model> findModelById(String modelId);
 
     Optional<FileContent> getModelExtensionsFileContent(Model model);
+
     void cleanModelIdList();
 
     Optional<FileContent> getModelDiagramFile(String modelId);
@@ -59,7 +60,7 @@ public interface ModelService {
 
     Optional<ModelContent> createModelContentFromModel(Model model,
                                                        FileContent fileContent);
-    
+
     Model importSingleModel(Project project,
                             ModelType modelType,
                             FileContent fileContent);
@@ -72,8 +73,8 @@ public interface ModelService {
                                  ModelType modelType,
                                  FileContent fileContent);
 
-    <T extends Task> List<T> getTasksBy(Project project, 
-                                        ModelType processModelType, 
+    <T extends Task> List<T> getTasksBy(Project project,
+                                        ModelType processModelType,
                                         @NonNull Class<T> clazz);
 
     List<Process> getProcessesBy(Project project, ModelType type);
@@ -106,8 +107,8 @@ public interface ModelService {
     void validateModelExtensions(Model model,
                                  FileContent fileContent,
                                  ValidationContext validationContext);
-    
-    public static class ProjectAccessControl  {
+
+    public static class ProjectAccessControl {
 
         private final Set<String> users;
         private final Set<String> groups;
