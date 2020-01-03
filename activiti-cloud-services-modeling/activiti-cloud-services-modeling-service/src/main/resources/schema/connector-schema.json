@@ -24,7 +24,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [ "string", "integer", "boolean", "date", "json", "file" ]
+            "enum": [ "string", "integer", "boolean", "date", "json", "file", "datetime" ]
           },
           "required": {
             "type": "boolean"
