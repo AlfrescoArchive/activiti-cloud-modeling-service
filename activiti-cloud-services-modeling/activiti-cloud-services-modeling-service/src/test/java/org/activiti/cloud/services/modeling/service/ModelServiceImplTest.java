@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -22,7 +23,10 @@ import org.activiti.bpmn.model.UserTask;
 import org.activiti.cloud.modeling.api.Model;
 import org.activiti.cloud.modeling.api.ProcessModelType;
 import org.activiti.cloud.modeling.api.Project;
+import org.activiti.cloud.modeling.api.impl.ModelImpl;
+import org.activiti.cloud.modeling.converter.JsonConverter;
 import org.activiti.cloud.modeling.repository.ModelRepository;
+import org.activiti.cloud.services.common.file.FileContent;
 import org.activiti.cloud.services.modeling.converter.ProcessModelContentConverter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,6 +41,12 @@ public class ModelServiceImplTest {
 
     @InjectMocks
     private ModelServiceImpl modelService;
+
+    @Mock
+    private JsonConverter jsonConverter;
+
+    @Mock
+    private ModelTypeService modelTypeService;
 
     @Mock
     private ModelRepository modelRepository;
@@ -111,6 +121,20 @@ public class ModelServiceImplTest {
         assertThat(processes).contains(processOne);
 
         verify(bpmnModelOne, times(1)).getProcesses();
+    }
+
+    @Test
+    public void should_returnProcessExtensionsFileForTheModelGiven() throws IOException, XMLStreamException {
+        ProcessModelType modelType = new ProcessModelType();
+        when(modelRepository.getModelType()).thenReturn(ModelImpl.class);
+        when(modelOne.getName()).thenReturn("fake-process-model");
+        when(modelOne.getType()).thenReturn("PROCESS");
+        when(modelOne.getId()).thenReturn("1234");
+        when(modelTypeService.findModelTypeByName(any())).thenReturn(Optional.of(modelType));
+        when(jsonConverter.convertToJsonBytes(any())).thenCallRealMethod();
+
+        Optional<FileContent> fileContent = modelService.getModelExtensionsFileContent(modelOne);
+        assertThat(fileContent.get().getFilename()).isEqualTo("fake-process-model-extensions.json");
     }
 
     private Process initProcess(FlowElement... elements) {
