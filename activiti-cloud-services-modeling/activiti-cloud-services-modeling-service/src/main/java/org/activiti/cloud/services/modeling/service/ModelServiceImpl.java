@@ -177,8 +177,6 @@ public class ModelServiceImpl implements ModelService{
         }
 
         Model fullModel = findModelById(model.getId()).orElse(model);
-        byte[] modelContent = modelRepository.getModelContent(model);
-
         Model modelToFile = buildModel(fullModel.getType(),
                                        fullModel.getName());
         modelToFile.setId(model.getId());

@@ -11,11 +11,13 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
 import javax.xml.stream.XMLStreamException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.bpmn.model.FlowElement;
 import org.activiti.bpmn.model.Process;
@@ -126,15 +128,29 @@ public class ModelServiceImplTest {
     @Test
     public void should_returnProcessExtensionsFileForTheModelGiven() throws IOException, XMLStreamException {
         ProcessModelType modelType = new ProcessModelType();
+        ModelImpl extensionModelImpl = this.createModelImpl();
         when(modelRepository.getModelType()).thenReturn(ModelImpl.class);
-        when(modelOne.getName()).thenReturn("fake-process-model");
-        when(modelOne.getType()).thenReturn("PROCESS");
-        when(modelOne.getId()).thenReturn("1234");
         when(modelTypeService.findModelTypeByName(any())).thenReturn(Optional.of(modelType));
-        when(jsonConverter.convertToJsonBytes(any())).thenCallRealMethod();
+        when(jsonConverter.convertToJsonBytes(any()))
+            .thenReturn(new ObjectMapper().writeValueAsBytes(extensionModelImpl));
 
-        Optional<FileContent> fileContent = modelService.getModelExtensionsFileContent(modelOne);
+        Optional<FileContent> fileContent = modelService.getModelExtensionsFileContent(extensionModelImpl);
         assertThat(fileContent.get().getFilename()).isEqualTo("fake-process-model-extensions.json");
+        assertThat(new String(fileContent.get().getFileContent()))
+            .isEqualToIgnoringCase("{\"id\":\"12345678\",\"name\":\"fake-process-model\",\"type\":\"PROCESS\",\"extensions\":{\"mappings\":\"\",\"constants\":\"\",\"properties\":\"\"}}");
+    }
+
+    private ModelImpl createModelImpl() {
+        ModelImpl transoformationModelImpl = new ModelImpl();
+        LinkedHashMap extension = new LinkedHashMap<>();
+        extension.put("mappings", "");
+        extension.put("constants", "");
+        extension.put("properties", "");
+        transoformationModelImpl.setExtensions(extension);
+        transoformationModelImpl.setName("fake-process-model");
+        transoformationModelImpl.setType("PROCESS");
+        transoformationModelImpl.setId("12345678");
+        return transoformationModelImpl;
     }
 
     private Process initProcess(FlowElement... elements) {
@@ -143,4 +159,6 @@ public class ModelServiceImplTest {
                 .forEach(process::addFlowElement);
         return process;
     }
+
+
 }
