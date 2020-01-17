@@ -104,7 +104,7 @@ public class ConnectorValidationControllerIT {
 
         given()
                 .multiPart("file",
-                        "simple-connector.json",
+                        "connector-with-events.json",
                         resourceAsByteArray("connector/connector-with-events.json"),
                         "text/plain")
                 .post("/v1/models/{modelId}/validate",
