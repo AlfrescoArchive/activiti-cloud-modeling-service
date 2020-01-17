@@ -88,34 +88,4 @@ public class ProcessModelContentConverter implements ModelContentConverter<BpmnP
         }
     }
 
-    @Override
-    public FileContent overrideModelId(FileContent fileContent,
-                                       Map<String, String> modelIdentifiers) {
-        FileContent newFileContent;
-        Optional<BpmnProcessModelContent> processModelContent = this.convertToModelContent(fileContent.getFileContent());
-        if (processModelContent.isPresent()) {
-            BpmnProcessModelContent modelContent = processModelContent.get();
-            ReferenceIdOverrider referenceIdOverrider = new ReferenceIdOverrider(modelIdentifiers);
-            this.overrideAllProcessDefinition(modelContent, referenceIdOverrider);
-            byte[] overriddenContent = this.convertToBytes(modelContent);
-            newFileContent = new FileContent(fileContent.getFilename(), fileContent.getContentType(), overriddenContent);
-        } else {
-            newFileContent = fileContent;
-        }
-        return newFileContent;
-    }
-
-    public void overrideAllProcessDefinition(BpmnProcessModelContent processModelContent,
-                                             ReferenceIdOverrider referenceIdOverrider) {
-        processModelContent.getBpmnModel().getProcesses().forEach(process -> {
-            referenceIdOverrider.overrideProcessId(process);
-            overrideAllIdReferences(process, referenceIdOverrider);
-        });
-    }
-
-    private void overrideAllIdReferences(Process process,
-                                        ReferenceIdOverrider referenceIdOverrider) {
-        process.getFlowElements().forEach(element -> element.accept(referenceIdOverrider));
-    }
-
 }

@@ -227,11 +227,7 @@ public class ModelServiceImpl implements ModelService{
     @Override
     public Model updateModelContent(Model modelToBeUpdate,
                                     FileContent fileContent) {
-        FileContent fixedFileContent = this.modelIdentifiers.isEmpty()
-                ? fileContent
-                : overrideModelContentId(modelToBeUpdate,
-                                         fileContent);
-
+        FileContent fixedFileContent = fileContent;
         modelToBeUpdate.setContentType(fixedFileContent.getContentType());
         modelToBeUpdate.setContent(fixedFileContent.getFileContent());
 

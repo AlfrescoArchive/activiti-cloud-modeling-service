@@ -4,9 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.activiti.bpmn.converter.BpmnXMLConverter;
-import org.activiti.bpmn.model.BpmnModel;
-import org.activiti.bpmn.model.FlowElement;
-import org.activiti.bpmn.model.Process;
 import org.activiti.cloud.modeling.api.ProcessModelType;
 import org.activiti.cloud.services.common.file.FileContent;
 import org.junit.Before;
@@ -28,12 +25,6 @@ public class ProcessModelContentConverterTest {
     @Mock
     private BpmnXMLConverter bpmnXMLConverter;
 
-    @Mock
-    private FlowElement flowElement;
-
-    @Mock
-    private ReferenceIdOverrider referenceIdOverrider;
-
     @Before
     public void setUp() {
         processModelContentConverter = new ProcessModelContentConverter(processModelType, bpmnXMLConverter);
@@ -50,21 +41,5 @@ public class ProcessModelContentConverterTest {
 
         assertThat(result).isSameAs(fileContent);
     }
-
-    @Test
-    public void should_overrideAllProcessDefinition_when_newProcessId() {
-        Process process = new Process();
-        process.addFlowElement(flowElement);
-
-        BpmnModel bpmnModel = new BpmnModel();
-        bpmnModel.addProcess(process);
-        BpmnProcessModelContent processModelContent = new BpmnProcessModelContent(bpmnModel);
-
-        processModelContentConverter.overrideAllProcessDefinition(processModelContent, referenceIdOverrider);
-
-        verify(referenceIdOverrider).overrideProcessId(process);
-        verify(flowElement).accept(referenceIdOverrider);
-    }
-
 }
 
