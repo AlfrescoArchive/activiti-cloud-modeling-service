@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -67,6 +68,8 @@ import org.springframework.web.multipart.MultipartFile;
 @PreAuthorize("hasRole('ACTIVITI_MODELER')")
 @Transactional
 public class ProjectServiceImpl implements ProjectService {
+
+    private final static Pattern EXPRESSION_REGEX = Pattern.compile("^\\$\\{[\\p{Graph}]+\\}+$");
 
     private final ProjectRepository projectRepository;
 
@@ -202,17 +205,29 @@ public class ProjectServiceImpl implements ProjectService {
 
     private void extractGroups(Set<String> groups, UserTask userTask) {
         if(userTask.getCandidateGroups() != null){
-            groups.addAll(userTask.getCandidateGroups());
+            userTask.getCandidateGroups()
+                    .stream()
+                    .filter(this::isNotAnExpression)
+                    .forEach(groups::add);
         }
     }
 
     private void extractUsers(Set<String> users, UserTask userTask) {
-        if(userTask.getAssignee() != null){
-            users.add(userTask.getAssignee());
+        String assignee = userTask.getAssignee();
+        if(assignee != null && isNotAnExpression(assignee)){
+            users.add(assignee);
         }
+
         if(userTask.getCandidateUsers() != null){
-            users.addAll(userTask.getCandidateUsers());
+            userTask.getCandidateUsers()
+                    .stream()
+                    .filter(this::isNotAnExpression)
+                    .forEach(users::add);
         }
+    }
+
+    private boolean isNotAnExpression(String v) {
+        return !EXPRESSION_REGEX.matcher(v).find();
     }
 
     private ProjectDescriptor buildDescriptor(Project project) {
