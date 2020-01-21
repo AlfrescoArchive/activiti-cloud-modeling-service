@@ -204,12 +204,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     private void extractGroups(Set<String> groups, UserTask userTask) {
-        if(userTask.getCandidateGroups() != null){
-            userTask.getCandidateGroups()
-                    .stream()
-                    .filter(this::isNotAnExpression)
-                    .forEach(groups::add);
-        }
+        addCandidatesThatAreNotAnExpression(userTask.getCandidateGroups(), groups);
     }
 
     private void extractUsers(Set<String> users, UserTask userTask) {
@@ -218,8 +213,12 @@ public class ProjectServiceImpl implements ProjectService {
             users.add(assignee);
         }
 
-        if(userTask.getCandidateUsers() != null){
-            userTask.getCandidateUsers()
+        addCandidatesThatAreNotAnExpression(userTask.getCandidateUsers(), users);
+    }
+
+    private void addCandidatesThatAreNotAnExpression(List<String> candidates, Set<String> users) {
+        if(candidates != null) {
+            candidates
                     .stream()
                     .filter(this::isNotAnExpression)
                     .forEach(users::add);
