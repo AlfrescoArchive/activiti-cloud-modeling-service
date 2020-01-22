@@ -22,13 +22,8 @@ import static org.activiti.cloud.services.common.util.ContentTypeUtils.removeExt
 import static org.activiti.cloud.services.common.util.ContentTypeUtils.toJsonFilename;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -191,38 +186,44 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectAccessControl getProjectAccessControl(Project project){
-        Set<String> users = new HashSet<>();
-        Set<String> groups = new HashSet<>();
+        List<UserTask> userTasks = modelService.getTasksBy(project, new ProcessModelType(), UserTask.class);
 
-        modelService.getTasksBy(project, new ProcessModelType(), UserTask.class)
-                .forEach(userTask -> {
-                    extractUsers(users, userTask);
-                    extractGroups(groups, userTask);
-                });
+        Set<String> users = extractFromTasks(this::selectUsers, userTasks);
+        Set<String> groups = extractFromTasks(this::selectGroups, userTasks);
 
         return new ProjectAccessControl(users, groups);
     }
 
-    private void extractGroups(Set<String> groups, UserTask userTask) {
-        addCandidatesThatAreNotAnExpression(userTask.getCandidateGroups(), groups);
+    private Set<String> extractFromTasks(Function<UserTask, Set<String>> extractor, List<UserTask> userTasks) {
+        return userTasks
+                                    .stream()
+                                    .map(extractor)
+                                    .flatMap(Set::stream)
+                                    .collect(Collectors.toSet());
     }
 
-    private void extractUsers(Set<String> users, UserTask userTask) {
+    private Set<String> selectGroups(UserTask userTask) {
+        return selectCandidatesThatAreNotAnExpression(userTask.getCandidateGroups());
+    }
+
+    private Set<String> selectUsers(UserTask userTask) {
+        Set<String> users = selectCandidatesThatAreNotAnExpression(userTask.getCandidateUsers());
         String assignee = userTask.getAssignee();
         if(assignee != null && isNotAnExpression(assignee)){
             users.add(assignee);
         }
-
-        addCandidatesThatAreNotAnExpression(userTask.getCandidateUsers(), users);
+        return users;
     }
 
-    private void addCandidatesThatAreNotAnExpression(List<String> candidates, Set<String> users) {
+    private Set<String> selectCandidatesThatAreNotAnExpression(List<String> candidates) {
+        Set<String> result = Collections.emptySet();
         if(candidates != null) {
-            candidates
+            result = candidates
                     .stream()
                     .filter(this::isNotAnExpression)
-                    .forEach(users::add);
+                    .collect(Collectors.toSet());
         }
+        return result;
     }
 
     private boolean isNotAnExpression(String v) {
