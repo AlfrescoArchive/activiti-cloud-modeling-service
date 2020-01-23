@@ -89,6 +89,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @RunWith(SpringRunner.class)
@@ -152,9 +154,7 @@ public class ModelControllerIT {
                                     equalTo("process-model")))
                 .andExpect(jsonPath("$.type",
                                     equalTo(PROCESS)))
-                .andExpect(jsonPath("$.extensions.properties",
-                                    notNullValue()))
-                .andExpect(jsonPath("$.extensions.mappings",
+                .andExpect(jsonPath("$.extensions",
                                     notNullValue()));
     }
 
@@ -171,9 +171,7 @@ public class ModelControllerIT {
                 .andExpect(jsonPath("$.name",
                                     equalTo("connector-model")))
                 .andExpect(jsonPath("$.type",
-                                    equalTo(ConnectorModelType.NAME)))
-                .andExpect(jsonPath("$",
-                                    hasNoJsonPath("extensions")));
+                                    equalTo(ConnectorModelType.NAME)));
     }
 
     @Test
@@ -189,8 +187,9 @@ public class ModelControllerIT {
                                         .add("myIntegerConstant",
                                              10)
                                         .build());
-        ModelEntity processModel = processModelWithExtensions("process-model-extensions",
-                                                              extensions);
+        Map<String, Extensions> extensionsMap = new HashMap<String, Extensions>();
+        extensionsMap.put("process-model-extensions", extensions);
+        ModelEntity processModel = processModelWithExtensions("process-model-extensions", extensionsMap);
         mockMvc.perform(post("{version}/projects/{projectId}/models",
                              API_VERSION,
                              project.getId())
@@ -198,10 +197,10 @@ public class ModelControllerIT {
                                 .content(mapper.writeValueAsString(processModel)))
                 .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.extensions.properties",
+                .andExpect(jsonPath("$.extensions.process-model-extensions.properties",
                                     allOf(hasKey("variable1"),
                                           hasKey("variable2"))))
-                .andExpect(jsonPath("$.extensions.mappings",
+                .andExpect(jsonPath("$.extensions.process-model-extensions.mappings",
                                     hasEntry(equalTo("ServiceTask"),
                                              allOf(hasEntry(equalTo("inputs"),
                                                             allOf(hasKey("variable1"),
@@ -211,7 +210,7 @@ public class ModelControllerIT {
                                                                   hasKey("variable2")))
                                              ))
 
-                )).andExpect(jsonPath("$.extensions.constants",
+                )).andExpect(jsonPath("$.extensions.process-model-extensions.constants",
                                       hasEntry(equalTo("ServiceTask"),
                                                hasEntry(
                                                        equalTo("myStringConstant"),
@@ -220,7 +219,7 @@ public class ModelControllerIT {
                                                )
 
                                       )))
-                .andExpect(jsonPath("$.extensions.constants",
+                .andExpect(jsonPath("$.extensions.process-model-extensions.constants",
                                     hasEntry(equalTo("ServiceTask"),
                                              hasEntry(
                                                      equalTo("myIntegerConstant"),
@@ -275,20 +274,20 @@ public class ModelControllerIT {
 
     @Test
     public void should_returnStatusOkAndExtensions_when_gettingAnExistingModelWithExtensions() throws Exception {
+        Map<String, Extensions> extensionsMap = new HashMap<String, Extensions>();
+        extensionsMap.put("process-model-with-extensions",extensions("ServiceTask",  "stringVariable",
+                                                        "integerVariable",
+                                                        "booleanVariable",
+                                                        "dateVariable",
+                                                        "jsonVariable"));
         Model processModel = modelRepository
-                .createModel(processModelWithExtensions("process-model-with-extensions",
-                                                        extensions("ServiceTask",
-                                                                   "stringVariable",
-                                                                   "integerVariable",
-                                                                   "booleanVariable",
-                                                                   "dateVariable",
-                                                                   "jsonVariable")));
+                .createModel(processModelWithExtensions("process-model-with-extensions", extensionsMap ));
         mockMvc.perform(get("{version}/models/{modelId}",
                             API_VERSION,
                             processModel.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.extensions.properties",
+                .andExpect(jsonPath("$.extensions.process-model-with-extensions.properties",
                                     allOf(hasEntry(equalTo("stringVariable"),
                                                    allOf(hasEntry(equalTo("id"),
                                                                   equalTo("stringVariable")),
@@ -336,7 +335,7 @@ public class ModelControllerIT {
                                                          hasEntry(equalTo("value"),
                                                                   isJson(withJsonPath("json-field-name")))))
                                     )))
-                .andExpect(jsonPath("$.extensions.mappings",
+                .andExpect(jsonPath("$.extensions.process-model-with-extensions.mappings",
                                     hasEntry(equalTo("ServiceTask"),
                                              allOf(hasEntry(equalTo("inputs"),
                                                             allOf(hasEntry(equalTo("stringVariable"),
@@ -435,14 +434,14 @@ public class ModelControllerIT {
 
     @Test
     public void should_returnStatusOk_when_updatingModelWithExtensions() throws Exception {
-        ModelEntity processModel = processModelWithExtensions("process-model-extensions",
-                                                              extensions("ServiceTask",
-                                                                         "variable1"));
+        Map<String, Extensions> extensionsMap = new HashMap<String, Extensions>();
+        extensionsMap.put("process-model-extensions", extensions("ServiceTask", "variable1"));
+        ModelEntity processModel = processModelWithExtensions("process-model-extensions", extensionsMap);
         modelRepository.createModel(processModel);
 
-        ModelEntity newModel = processModelWithExtensions("process-model-extensions",
-                                                          extensions("variable2",
-                                                                     "variable3"));
+        Map<String, Extensions> secondExtensionMap = new HashMap<String, Extensions>();
+        extensionsMap.put("process-model-extensions", extensions("variable2", "variable3"));
+        ModelEntity newModel = processModelWithExtensions("process-model-extensions", secondExtensionMap);
         mockMvc.perform(put("{version}/models/{modelId}",
                             API_VERSION,
                             processModel.getId())
@@ -522,7 +521,7 @@ public class ModelControllerIT {
         ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("project-test"));
         Model processModel = modelRepository.createModel(
                 processModelWithExtensions(project,
-                                           "process-model",
+                                           "Process_x",
                                            new Extensions(),
                                            resourceAsByteArray("process/x-19022.bpmn20.xml")));
         MockMultipartFile file = multipartExtensionsFile(
@@ -541,7 +540,7 @@ public class ModelControllerIT {
 
         ProjectEntity project = (ProjectEntity) projectRepository.createProject(project("project-test"));
         Model processModel = modelRepository.createModel(processModelWithExtensions(project,
-                                                                                    "process-model",
+                                                                                    "Process_x",
                                                                                     new Extensions(),
                                                                                     resourceAsByteArray("process/x-19022.bpmn20.xml")));
 
@@ -575,7 +574,7 @@ public class ModelControllerIT {
                                    processModel.getId()).file(file))
                 .andDo(print());
         resultActions.andExpect(status().isBadRequest());
-        assertThat(resultActions.andReturn().getResponse().getErrorMessage()).isEqualTo("#/extensions/mappings/ServiceTask_06crg3b: #: only 0 subschema matches out of 2");
+        assertThat(resultActions.andReturn().getResponse().getErrorMessage()).isEqualTo("#/extensions/Process_test/mappings/ServiceTask_06crg3b: #: only 0 subschema matches out of 2");
 
         final Exception resolvedException = resultActions.andReturn().getResolvedException();
         assertThat(resolvedException).isInstanceOf(SemanticModelValidationException.class);
@@ -586,13 +585,13 @@ public class ModelControllerIT {
                 .extracting(ModelValidationError::getProblem,
                             ModelValidationError::getDescription)
                 .containsOnly(tuple("extraneous key [inputds] is not permitted",
-                                    "#/extensions/mappings/ServiceTask_06crg3b: extraneous key [inputds] is not permitted"),
+                                    "#/extensions/Process_test/mappings/ServiceTask_06crg3b: extraneous key [inputds] is not permitted"),
                               tuple("extraneous key [outputss] is not permitted",
-                                    "#/extensions/mappings/ServiceTask_06crg3b: extraneous key [outputss] is not permitted"),
+                                    "#/extensions/Process_test/mappings/ServiceTask_06crg3b: extraneous key [outputss] is not permitted"),
                                 tuple("required key [inputs] not found",
-                                    "#/extensions/mappings/ServiceTask_06crg3b: required key [inputs] not found"),
+                                    "#/extensions/Process_test/mappings/ServiceTask_06crg3b: required key [inputs] not found"),
                                 tuple("required key [outputs] not found",
-                                    "#/extensions/mappings/ServiceTask_06crg3b: required key [outputs] not found"));
+                                    "#/extensions/Process_test/mappings/ServiceTask_06crg3b: required key [outputs] not found"));
     }
 
     @Test

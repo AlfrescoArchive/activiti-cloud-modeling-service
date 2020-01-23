@@ -17,10 +17,7 @@
 package org.activiti.cloud.services.modeling.mock;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -78,10 +75,10 @@ public class MockFactory {
     }
 
     public static ModelEntity processModelWithExtensions(String name,
-                                                         Extensions extensions) {
+                                                         Map<String, Extensions> extensions) {
         return processModelWithExtensions(null,
                                           name,
-                                          extensions);
+                                          extensions!=null ? extensions.get(name) : null);
     }
 
     public static ModelEntity processModelWithExtensions(String name,
@@ -109,12 +106,18 @@ public class MockFactory {
         ModelEntity processModel = new ModelEntity(name,
                                                    PROCESS);
         processModel.setProject(parentProject);
-        processModel.setExtensions(extensions!=null?extensions.getAsMap():null);
+        processModel.setExtensions(extensions!=null?generateExtensions(name, extensions):null);
         if (content != null) {
             processModel.setContentType(CONTENT_TYPE_XML);
             processModel.setContent(content);
         }
         return processModel;
+    }
+
+    private static Map<String, Object> generateExtensions(String name, Extensions extension) {
+        Map<String, Object> generatedExtension = new HashMap<String, Object>();
+        generatedExtension.put(name, extension.getAsMap());
+        return generatedExtension;
     }
 
     public static ModelEntity processModelWithContent(String name,
@@ -157,7 +160,7 @@ public class MockFactory {
                                                       String content) {
         ModelEntity processModel = processModel(name);
         processModel.setProject(project);
-        processModel.setExtensions(extensions!=null?extensions.getAsMap():null);
+        processModel.setExtensions(extensions!=null?generateExtensions(name, extensions):null);
         if (content != null) {
             processModel.setContentType(CONTENT_TYPE_XML);
             processModel.setContent(content.getBytes());
@@ -165,7 +168,7 @@ public class MockFactory {
         return processModel;
     }
 
-    public static Extensions extensions(byte[] bytes) {
+    public static Map<String, Extensions> extensions(byte[] bytes) {
         try {
             return getFromMap(new ObjectMapper()
                     .readValue(bytes,
@@ -176,13 +179,13 @@ public class MockFactory {
         }
     }
 
-    private static Extensions getFromMap(Map<String,Object> map) throws IOException {
+    private static Map<String, Extensions> getFromMap(Map<String,Object> map) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         String exstensionJson = objectMapper.writeValueAsString(map);
         if (StringUtils.isEmpty(exstensionJson)) {
             return null;
         }
-        return objectMapper.readValue(exstensionJson,Extensions.class);
+        return objectMapper.readValue(exstensionJson, objectMapper.getTypeFactory().constructMapType(Map.class,String.class, Extensions.class));
     }
 
     public static Extensions extensions(String serviceTask,
