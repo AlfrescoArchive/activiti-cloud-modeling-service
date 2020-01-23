@@ -16,7 +16,6 @@
 
 package org.activiti.cloud.services.modeling.rest.controller;
 
-import static com.jayway.jsonpath.matchers.JsonPathMatchers.hasNoJsonPath;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.isJson;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.withJsonPath;
 import static org.activiti.cloud.modeling.api.ProcessModelType.PROCESS;
@@ -187,9 +186,9 @@ public class ModelControllerIT {
                                         .add("myIntegerConstant",
                                              10)
                                         .build());
-        Map<String, Extensions> extensions = new HashMap<String, Extensions>();
-        extensions.put("process-model-extensions", extensions);
-        ModelEntity processModel = processModelWithExtensions("process-model-extensions", extensions);
+        Map<String, Extensions> processExtension = new HashMap<String, Extensions>();
+        processExtension.put("process-model-extensions", extensions);
+        ModelEntity processModel = processModelWithExtensions("process-model-extensions", processExtension);
         mockMvc.perform(post("{version}/projects/{projectId}/models",
                              API_VERSION,
                              project.getId())
