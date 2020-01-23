@@ -187,9 +187,9 @@ public class ModelControllerIT {
                                         .add("myIntegerConstant",
                                              10)
                                         .build());
-        Map<String, Extensions> extensionsMap = new HashMap<String, Extensions>();
-        extensionsMap.put("process-model-extensions", extensions);
-        ModelEntity processModel = processModelWithExtensions("process-model-extensions", extensionsMap);
+        Map<String, Extensions> extensions = new HashMap<String, Extensions>();
+        extensions.put("process-model-extensions", extensions);
+        ModelEntity processModel = processModelWithExtensions("process-model-extensions", extensions);
         mockMvc.perform(post("{version}/projects/{projectId}/models",
                              API_VERSION,
                              project.getId())
@@ -274,14 +274,14 @@ public class ModelControllerIT {
 
     @Test
     public void should_returnStatusOkAndExtensions_when_gettingAnExistingModelWithExtensions() throws Exception {
-        Map<String, Extensions> extensionsMap = new HashMap<String, Extensions>();
-        extensionsMap.put("process-model-with-extensions",extensions("ServiceTask",  "stringVariable",
+        Map<String, Extensions> extensions = new HashMap<String, Extensions>();
+        extensions.put("process-model-with-extensions",extensions("ServiceTask",  "stringVariable",
                                                         "integerVariable",
                                                         "booleanVariable",
                                                         "dateVariable",
                                                         "jsonVariable"));
         Model processModel = modelRepository
-                .createModel(processModelWithExtensions("process-model-with-extensions", extensionsMap ));
+                .createModel(processModelWithExtensions("process-model-with-extensions", extensions ));
         mockMvc.perform(get("{version}/models/{modelId}",
                             API_VERSION,
                             processModel.getId()))
@@ -434,13 +434,13 @@ public class ModelControllerIT {
 
     @Test
     public void should_returnStatusOk_when_updatingModelWithExtensions() throws Exception {
-        Map<String, Extensions> extensionsMap = new HashMap<String, Extensions>();
-        extensionsMap.put("process-model-extensions", extensions("ServiceTask", "variable1"));
-        ModelEntity processModel = processModelWithExtensions("process-model-extensions", extensionsMap);
+        Map<String, Extensions> extensions = new HashMap<String, Extensions>();
+        extensions.put("process-model-extensions", extensions("ServiceTask", "variable1"));
+        ModelEntity processModel = processModelWithExtensions("process-model-extensions", extensions);
         modelRepository.createModel(processModel);
 
         Map<String, Extensions> secondExtensionMap = new HashMap<String, Extensions>();
-        extensionsMap.put("process-model-extensions", extensions("variable2", "variable3"));
+        extensions.put("process-model-extensions", extensions("variable2", "variable3"));
         ModelEntity newModel = processModelWithExtensions("process-model-extensions", secondExtensionMap);
         mockMvc.perform(put("{version}/models/{modelId}",
                             API_VERSION,

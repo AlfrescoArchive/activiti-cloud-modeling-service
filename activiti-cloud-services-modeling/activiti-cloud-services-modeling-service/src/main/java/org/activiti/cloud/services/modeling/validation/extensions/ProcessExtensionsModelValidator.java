@@ -91,8 +91,7 @@ public class ProcessExtensionsModelValidator extends ExtensionsJsonSchemaValidat
                                                                    ValidationContext validationContext,
                                                                    BpmnProcessModelContent bpmnModel) {
         return bpmnModel.getBpmnModel().getProcesses().stream()
-            .map(process -> process.getId())
-            .map(processId -> this.retrieveExtensionByProcessId(model, processId))
+            .map(process -> this.retrieveExtensionByProcessId(model, process.getId()))
             .flatMap(extensions -> validateProcessExtension(extensions, validationContext, bpmnModel));
     }
 

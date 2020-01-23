@@ -21,7 +21,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -106,7 +105,7 @@ public class MockFactory {
         ModelEntity processModel = new ModelEntity(name,
                                                    PROCESS);
         processModel.setProject(parentProject);
-        processModel.setExtensions(extensions!=null?generateExtensions(name, extensions):null);
+        processModel.setExtensions(extensions!=null? buildExtensions(name, extensions):null);
         if (content != null) {
             processModel.setContentType(CONTENT_TYPE_XML);
             processModel.setContent(content);
@@ -114,9 +113,9 @@ public class MockFactory {
         return processModel;
     }
 
-    private static Map<String, Object> generateExtensions(String name, Extensions extension) {
+    private static Map<String, Object> buildExtensions(String name, Extensions extensions) {
         Map<String, Object> generatedExtension = new HashMap<String, Object>();
-        generatedExtension.put(name, extension.getAsMap());
+        generatedExtension.put(name, extensions.getAsMap());
         return generatedExtension;
     }
 
@@ -160,7 +159,7 @@ public class MockFactory {
                                                       String content) {
         ModelEntity processModel = processModel(name);
         processModel.setProject(project);
-        processModel.setExtensions(extensions!=null?generateExtensions(name, extensions):null);
+        processModel.setExtensions(extensions!=null? buildExtensions(name, extensions):null);
         if (content != null) {
             processModel.setContentType(CONTENT_TYPE_XML);
             processModel.setContent(content.getBytes());
@@ -170,7 +169,7 @@ public class MockFactory {
 
     public static Map<String, Extensions> extensions(byte[] bytes) {
         try {
-            return getFromMap(new ObjectMapper()
+            return getExtensionMapFromJson(new ObjectMapper()
                     .readValue(bytes,
                                ModelEntity.class)
                     .getExtensions());
@@ -179,7 +178,7 @@ public class MockFactory {
         }
     }
 
-    private static Map<String, Extensions> getFromMap(Map<String,Object> map) throws IOException {
+    private static Map<String, Extensions> getExtensionMapFromJson(Map<String,Object> map) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         String exstensionJson = objectMapper.writeValueAsString(map);
         if (StringUtils.isEmpty(exstensionJson)) {
