@@ -140,7 +140,10 @@ public class ModelServiceImpl implements ModelService{
         ModelType modelType = findModelType(model);
         model.setProject(project);
         if (model.getExtensions() == null) {
-          model.setExtensions(new HashMap<String,Object>());
+            if (PROCESS.equals(modelType.getName()) ||
+                isJsonContentType(model.getContentType())) {
+                model.setExtensions(new HashMap<String, Object>());
+            }
         }
         return modelRepository.createModel(model);
     }

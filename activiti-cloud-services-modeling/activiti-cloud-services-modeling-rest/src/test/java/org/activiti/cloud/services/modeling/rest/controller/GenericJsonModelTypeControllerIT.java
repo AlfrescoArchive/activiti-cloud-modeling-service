@@ -281,19 +281,18 @@ public class GenericJsonModelTypeControllerIT {
 
     @Test
     public void should_returnStatusCreatedAndEmptyExtensions_when_creatingGenericJsonModelWithNullExtensions() throws Exception {
-        Project project = projectRepository.createProject(project(GENERIC_PROJECT_NAME));
+        Project project = projectRepository.createProject(project("HAIROTTOILCAZZO"));
 
         Model genericJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
-                                                                             genericJsonModelType.getName()));
+            genericJsonModelType.getName()));
         Map<String, Object> extensions = null;
 
         genericJsonModel.setExtensions(extensions);
 
-        given().accept(APPLICATION_JSON_VALUE).contentType(APPLICATION_JSON_VALUE)
-            .body(objectMapper.writeValueAsString(genericJsonModel))
-            .post("/v1/projects/{projectId}/models", project.getId())
-            .then().expect(status().isCreated())
-            .body("entry.extensions", notNullValue());
+        given().accept(APPLICATION_JSON_VALUE).contentType(APPLICATION_JSON_VALUE).body(objectMapper.writeValueAsString(genericJsonModel)).post("/v1/projects/{projectId}/models",
+            project.getId())
+            .then().expect(status().isCreated()).body("entry.extensions",
+            nullValue());
     }
 
     @Test
