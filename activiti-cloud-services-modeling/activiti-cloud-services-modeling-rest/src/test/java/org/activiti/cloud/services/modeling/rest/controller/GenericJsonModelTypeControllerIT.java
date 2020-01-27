@@ -334,7 +334,7 @@ public class GenericJsonModelTypeControllerIT {
         genericJsonModel.setExtensions(extensions);
 
         given().accept(APPLICATION_JSON_VALUE).contentType(APPLICATION_JSON_VALUE).body(objectMapper.writeValueAsString(genericJsonModel)).post("/v1/projects/{projectId}/models",
-                                                                                                                                                project.getId())
+                                                                                                                                                   project.getId())
                 .then().expect(status().isCreated()).body("entry.extensions",
                                                           notNullValue())
                 .body("entry.extensions.string",
