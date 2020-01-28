@@ -281,7 +281,7 @@ public class GenericJsonModelTypeControllerIT {
 
     @Test
     public void should_returnStatusCreatedAndEmptyExtensions_when_creatingGenericJsonModelWithNullExtensions() throws Exception {
-        Project project = projectRepository.createProject(project("HAIROTTOILCAZZO"));
+        Project project = projectRepository.createProject(project(GENERIC_PROJECT_NAME));
 
         Model genericJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
             genericJsonModelType.getName()));
