@@ -284,7 +284,7 @@ public class GenericJsonModelTypeControllerIT {
         Project project = projectRepository.createProject(project(GENERIC_PROJECT_NAME));
 
         Model genericJsonModel = modelRepository.createModel(new ModelEntity(GENERIC_MODEL_NAME,
-            genericJsonModelType.getName()));
+                                                                             genericJsonModelType.getName()));
         Map<String, Object> extensions = null;
 
         genericJsonModel.setExtensions(extensions);
