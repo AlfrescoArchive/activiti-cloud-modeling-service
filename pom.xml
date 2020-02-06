@@ -5,12 +5,12 @@
   <parent>
     <groupId>org.activiti.cloud.build</groupId>
     <artifactId>activiti-cloud-parent</artifactId>
-    <version>7.1.33</version>
+    <version>7.1.0.M6</version>
     <relativePath/>
   </parent>
   <groupId>org.activiti.cloud.modeling</groupId>
   <artifactId>activiti-cloud-modeling-service-parent</artifactId>
-  <version>7.1.377</version>
+  <version>7.1.0.M6</version>
   <packaging>pom</packaging>
   <name>Activiti Cloud :: Modeling Services :: Parent</name>
   <modules>
@@ -22,11 +22,11 @@
   </modules>
   <properties>
     <project.scm.repository>activiti-cloud-modeling-service</project.scm.repository>
-    <activiti-cloud-build.version>7.1.33</activiti-cloud-build.version>
-    <activiti-dependencies.version>7.1.190</activiti-dependencies.version>
-    <activiti-cloud-service-common.version>7.1.166</activiti-cloud-service-common.version>
-    <activiti-cloud-acceptance-tests.version>7.1.183</activiti-cloud-acceptance-tests.version>
-    <activiti-cloud-modeling-service.version>${project.version}</activiti-cloud-modeling-service.version>
+    <activiti-cloud-build.version>7.1.0.M6</activiti-cloud-build.version>
+    <activiti-dependencies.version>7.1.0.M6</activiti-dependencies.version>
+    <activiti-cloud-service-common.version>7.1.0.M6</activiti-cloud-service-common.version>
+    <activiti-cloud-acceptance-tests.version>7.1.0.M6</activiti-cloud-acceptance-tests.version>
+    <activiti-cloud-modeling-service.version>7.1.0.M6</activiti-cloud-modeling-service.version>
     <everit-json-schema.version>1.12.1</everit-json-schema.version>
     <json.version>20180813</json.version>
     <commons-collections4.version>4.1</commons-collections4.version>
