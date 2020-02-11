@@ -37,10 +37,9 @@ public class ModelExtensionsService {
     public ModelExtensionsService(Set<ModelExtensionsValidator> metadataValidators,
                                   ExtensionsModelValidator extensionsModelValidator,
                                   ModelTypeService modelTypeService) {
-    this.modelExtensionsValidatorsMapByModelType =
-        metadataValidators.stream()
-            .filter(validator -> validator.getHandledModelType() != null)
-            .collect(Collectors.groupingBy(validator -> validator.getHandledModelType().getName()));
+    this.modelExtensionsValidatorsMapByModelType = metadataValidators.stream()
+        .filter(validator -> validator.getHandledModelType() != null)
+        .collect(Collectors.groupingBy(validator -> validator.getHandledModelType().getName()));
 
     // Add the generic JSON extensions schema to all the available model types except PROCESS
     modelTypeService.getAvailableModelTypes().stream().forEach(modelType ->
