@@ -25,5 +25,7 @@ import org.springframework.data.repository.NoRepositoryBean;
 @NoRepositoryBean
 public interface VersionedJpaRepository<T extends VersionedEntity, K, V extends VersionEntity>
         extends JpaRepository<T, K> {
-
+    
+    <S extends T> S illia(S entity);
+    
 }

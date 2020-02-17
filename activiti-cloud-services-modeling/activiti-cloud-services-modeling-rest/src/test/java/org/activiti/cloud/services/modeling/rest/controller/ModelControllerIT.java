@@ -26,7 +26,13 @@ import static org.activiti.cloud.services.modeling.mock.ConstantsBuilder.constan
 import static org.activiti.cloud.services.modeling.mock.IsObjectEquals.isBooleanEquals;
 import static org.activiti.cloud.services.modeling.mock.IsObjectEquals.isDateEquals;
 import static org.activiti.cloud.services.modeling.mock.IsObjectEquals.isIntegerEquals;
-import static org.activiti.cloud.services.modeling.mock.MockFactory.*;
+import static org.activiti.cloud.services.modeling.mock.MockFactory.connectorModel;
+import static org.activiti.cloud.services.modeling.mock.MockFactory.extensions;
+import static org.activiti.cloud.services.modeling.mock.MockFactory.multipartExtensionsFile;
+import static org.activiti.cloud.services.modeling.mock.MockFactory.processModel;
+import static org.activiti.cloud.services.modeling.mock.MockFactory.processModelWithContent;
+import static org.activiti.cloud.services.modeling.mock.MockFactory.processModelWithExtensions;
+import static org.activiti.cloud.services.modeling.mock.MockFactory.project;
 import static org.activiti.cloud.services.modeling.mock.MockMultipartRequestBuilder.putMultipart;
 import static org.activiti.cloud.services.modeling.rest.config.RepositoryRestConfig.API_VERSION;
 import static org.activiti.cloud.services.test.asserts.AssertResponseContent.assertThatResponseContent;
@@ -50,6 +56,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.cloud.modeling.api.ConnectorModelType;
@@ -81,10 +91,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = ModelingRestApplication.class)
@@ -1004,5 +1010,59 @@ public class ModelControllerIT {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.template").doesNotExist());
+    }
+    
+    @Test
+    public void test() throws Exception {
+        Model model = modelRepository.createModel(processModel("process-model"));
+
+        checkModelNameAndVersion(model.getId(),
+                                 "process-model",
+                                 "0.0.1");
+
+        mockMvc.perform(put("{version}/models/{modelId}",
+                            API_VERSION,
+                            model.getId())
+                                          .contentType(MediaType.APPLICATION_JSON_UTF8)
+                                          .content(mapper.writeValueAsString(processModel("new-process-model"))))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.name",
+                                   is("new-process-model")))
+               .andExpect(jsonPath("$.version",
+                                   is("0.0.2")));
+
+        checkModelNameAndVersion(model.getId(),
+                                 "new-process-model",
+                                 "0.0.2");
+        
+        mockMvc.perform(putMultipart("{version}/models/{modelId}/content",
+                                     API_VERSION,
+                                     model.getId())
+                                                   .file("file",
+                                                         "x-19022.bpmn20.xml",
+                                                         "application/xml",
+                                                         resourceAsByteArray("process/x-19022.bpmn20.xml")))
+               .andExpect(status().isNoContent());
+
+        checkModelNameAndVersion(model.getId(),
+                                 "new-process-model",
+                                 "0.0.3");
+
+    }
+    
+    private void checkModelNameAndVersion(String modelId,
+                                          String modelName,
+                                          String version) throws Exception {
+        mockMvc.perform(get("{version}/models/{modelId}",
+                            API_VERSION,
+                            modelId)
+                                    .accept(APPLICATION_JSON_VALUE))
+               .andDo(print())
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.entry.name",
+                                   is(modelName)))
+               .andExpect(jsonPath("$.entry.version",
+                                   is(version)));
+
     }
 }

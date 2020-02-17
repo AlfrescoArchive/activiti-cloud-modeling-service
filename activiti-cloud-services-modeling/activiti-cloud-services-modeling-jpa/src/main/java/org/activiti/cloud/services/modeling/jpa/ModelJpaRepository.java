@@ -36,7 +36,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
         collectionResourceRel = "models",
         itemResourceRel = "models",
         exported = false)
-public interface ModelJpaRepository extends VersionedJpaRepository<ModelEntity, String, ModelVersionEntity>,
+public interface ModelJpaRepository extends VersionedJpaRepository<ModelEntity, String, ModelVersionEntity>, 
                                             ModelRepository<ProjectEntity, ModelEntity> {
 
     Page<ModelEntity> findAllByProjectIdAndTypeEquals(String projectId,
@@ -60,7 +60,7 @@ public interface ModelJpaRepository extends VersionedJpaRepository<ModelEntity, 
     @Override
     default byte[] getModelContent(ModelEntity model) {
         return Optional.ofNullable(model.getContent())
-                .orElse(new byte[0]);
+                       .orElse(new byte[0]);
     }
 
     @Override
@@ -87,7 +87,8 @@ public interface ModelJpaRepository extends VersionedJpaRepository<ModelEntity, 
     @Override
     default ModelEntity updateModelContent(ModelEntity modelToBeUpdated,
                                            FileContent fileContent) {
-        return save(modelToBeUpdated);
+        return illia(modelToBeUpdated);
+        //return save(modelToBeUpdated);
     }
 
     @Override

@@ -19,6 +19,7 @@ package org.activiti.cloud.services.modeling.jpa.version;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+
 import javax.persistence.EntityManager;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -65,7 +66,19 @@ public class VersionedJpaRepositoryImpl<T extends VersionedEntity, K extends Ser
         generateNextVersion(versionedEntity);
         return super.save(versionedEntity);
     }
-
+    
+    /**
+     * Add a new version before any save.
+     * @param versionedEntity the entity to save
+     * @param <S> the versionedEntity type
+     * @return the saved entity
+     */
+/*    @Override
+    @Transactional
+    public <S extends T> S customSaveWithoutVersionChange(S versionedEntity) {
+        return super.save(versionedEntity);
+    }
+*/
     /**
      * Generate and add a new version to a given version entity.
      * @param versionedEntity the version entity to generate for
@@ -97,5 +110,11 @@ public class VersionedJpaRepositoryImpl<T extends VersionedEntity, K extends Ser
                                   versionedClass),
                     e);
         }
+    }
+
+    @Override
+    public <S extends T> S illia(S entity) {
+        // TODO Auto-generated method stub
+        return entity;
     }
 }
